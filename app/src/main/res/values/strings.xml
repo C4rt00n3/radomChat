@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">MeetTalk</string>
+    <string name="baseUrl">https://35d6-138-204-194-149.ngrok-free.app</string>
+    <string name="vis_o_geral">Visão geral</string>
+    <string name="desbloquear">Desbloquear</string>
+    <string name="bloquear">Bloquear</string>
+    <string name="m_dia">Mídia</string>
+    <string name="links">Links</string>
+    <string name="editar">Editar</string>
+    <string name="excluir">Excluir</string>
+    <string name="imagem_do_usuario">Imagem do usuario</string>
+    <string name="responder_mensagem">Responder mensagem</string>
+</resources>
