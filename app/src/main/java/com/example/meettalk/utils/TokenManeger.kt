@@ -3,7 +3,7 @@ package com.example.meettalk.utils
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.example.meettalk.data.local.model.entities.UserEntity
+import com.example.meettalk.data.local.model.entities.User
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -24,14 +24,14 @@ class TokenManager(context: Context) {
         sharedPreferences.edit().putString("auth_token", "Bearer $token").apply()
     }
 
-    fun saveUser(user: UserEntity) {
+    fun saveUser(user: User) {
         val json = gson.toJson(user)
         sharedPreferences.edit().putString("user", json).apply()
     }
 
-    fun getUser(): UserEntity? {
+    fun getUser(): User? {
         val json = sharedPreferences.getString("user", null) ?: return null
-        return gson.fromJson(json, object : TypeToken<UserEntity>() {}.type)
+        return gson.fromJson(json, object : TypeToken<User>() {}.type)
     }
 
     fun getToken(): String? {

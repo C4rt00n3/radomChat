@@ -1,19 +1,25 @@
 [versions]
-agp = "8.8.0"
-realm = "1.16.0"
+agp = "8.8.2"
+coilNetworkOkhttp = "3.2.0"
+core = "1.31.1"
+javaJwt = "4.4.0"
+jwtdecode = "2.0.0"
+kotlinxCoroutinesCore = "1.7.0"
+materialIconsExtended = "1.7.3"
+realm = "2.0.0"
 coilCompose = "2.4.0"
 converterGson = "2.9.0"
 kotlin = "2.0.0"
-coreKtx = "1.15.0"
+coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.10.0"
-composeBom = "2024.04.01"
-navigationCompose = "2.7.6"
+lifecycleRuntimeKtx = "2.9.0"
+activityCompose = "1.10.1"
+composeBom = "2025.05.01"
+navigationCompose = "2.9.0"
 retrofit = "2.9.0"
-securityCrypto = "1.1.0-alpha06"
+securityCrypto = "1.1.0-alpha07"
 socketIoClient = "2.1.0"
 roomCommonJvm = "2.7.1"
 roomCompiler = "2.7.1"
@@ -24,7 +30,10 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson" }
+core = { module = "com.composables:core", version.ref = "core" }
+java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -38,6 +47,11 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+jwtdecode = { module = "com.auth0.android:jwtdecode", version.ref = "jwtdecode" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
+library-base = { module = "io.realm.kotlin:library-base", version.ref = "realm" }
+library-sync = { module = "io.realm.kotlin:library-sync", version.ref = "realm" }
+material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit2-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIoClient" }

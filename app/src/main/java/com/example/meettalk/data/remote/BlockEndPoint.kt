@@ -1,6 +1,7 @@
 package com.example.meettalk.data.remote
 
-import com.example.meettalk.data.local.model.entities.BlockEntity
+import com.example.meettalk.data.local.model.entities.Block
+import com.example.meettalk.data.local.model.entities.Message
 import retrofit2.Response
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -13,7 +14,7 @@ interface BlockEndPoint {
     suspend fun create(
         @Header("Authorization") token: String,
         @Path("userId") userId: String
-    ): Response<BlockEntity>
+    ): Response<Block>
 
     @DELETE("block/{userId}")
     suspend fun delete(
@@ -24,5 +25,5 @@ interface BlockEndPoint {
     @GET("block")
     suspend fun findMany(
         @Header("Authorization") token: String,
-    ): Response<List<BlockEntity>>
+    ): Response<List<Block>>
 }

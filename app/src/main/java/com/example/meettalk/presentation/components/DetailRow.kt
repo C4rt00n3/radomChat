@@ -44,6 +44,7 @@ fun DetailRow(
             Text(
                 text = "$label: $value",
                 style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
 

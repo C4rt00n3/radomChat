@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meettalk.R
-import com.example.meettalk.data.local.model.entities.BlockEntity
+import com.example.meettalk.data.local.model.entities.Block
 import com.example.meettalk.data.remote.BlockEndPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,11 +22,11 @@ class BlockViewModel(context: Context): ViewModel() {
 
     private val apiServiceBlock = retrofit.create(BlockEndPoint::class.java)
 
-    private val _blocks = MutableStateFlow<List<BlockEntity>>(listOf())
-    val blocks: StateFlow<List<BlockEntity>> = _blocks
+    private val _blocks = MutableStateFlow<List<Block>>(listOf())
+    val blocks: StateFlow<List<Block>> = _blocks
 
-    private val _blocksBackup = MutableStateFlow<List<BlockEntity>>(listOf())
-    val blocksBackup: StateFlow<List<BlockEntity>> = _blocks
+    private val _blocksBackup = MutableStateFlow<List<Block>>(listOf())
+    val blocksBackup: StateFlow<List<Block>> = _blocks
 
     fun createBlock(userId: String, token: String) {
         viewModelScope.launch {
@@ -42,7 +42,6 @@ class BlockViewModel(context: Context): ViewModel() {
                 }
 
             } catch (error: Exception) {
-                println(error)
                 Log.d("Error", error.message.toString())
             }
         }
@@ -66,7 +65,7 @@ class BlockViewModel(context: Context): ViewModel() {
     fun findAllBlock(token: String) {
         viewModelScope.launch {
             try {
-                val response: Response<List<BlockEntity>> = apiServiceBlock.findMany(token)
+                val response: Response<List<Block>> = apiServiceBlock.findMany(token)
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _blocks.value = it

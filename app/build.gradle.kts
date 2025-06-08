@@ -2,8 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-
-    id("kotlin-kapt")
+    id("io.realm.kotlin") version "2.0.0"
 }
 
 configurations.implementation{
@@ -36,15 +35,20 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_19
+        targetCompatibility = JavaVersion.VERSION_19
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     kotlinOptions {
-        jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
+        jvmTarget = "19"
     }
 }
 
@@ -74,11 +78,17 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.room.compiler)
-    kapt(libs.androidx.room.compiler)
     implementation(libs.coil.compose)
-    implementation("io.realm.kotlin:library-base:1.16.0")
-    // If using Device Sync
-    implementation ("io.realm.kotlin:library-sync:1.16.0")
+    implementation(libs.coil.network.okhttp)
+
+    implementation (libs.library.base)
+    implementation (libs.library.sync)
     // If using coroutines with the SDK
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0")
+    implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.material.icons.extended)
+    implementation(libs.core)
+    implementation(libs.jwtdecode)
+    implementation(libs.java.jwt)
+
 }

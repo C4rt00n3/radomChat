@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meettalk.R
 import com.example.meettalk.data.local.model.body.LoginRequest
 import com.example.meettalk.presentation.viewmodel.LoginViewModel
@@ -78,7 +80,8 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
             Text(
                 text = "Login",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -97,15 +100,15 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
                     placeholder = { Text("Digite seu email") },
                     modifier = Modifier.padding(bottom = if (emailError) 8.dp else 32.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Gray,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         disabledTextColor = Color.Transparent,
                         errorTextColor = Color.Red,
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         disabledContainerColor = Color.Gray,
                         errorContainerColor = Color.Red.copy(alpha = 0.2f),
-                        cursorColor = DarkBlueLine,
+                        cursorColor = MaterialTheme.colorScheme.onBackground,
                         errorCursorColor = Color.Red,
                         focusedIndicatorColor = DarkBlueLine,
                         unfocusedIndicatorColor = DarkBlueLine,
@@ -131,8 +134,8 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
                     placeholder = { Text("Digite sua senha") },
                     modifier = Modifier.padding(bottom = if (passwordError) 8.dp else 0.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Gray,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         disabledTextColor = Color.LightGray,
                         errorTextColor = Color.Red,
                         focusedContainerColor = Color.Transparent,
@@ -164,12 +167,13 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
 
                     if (!emailError && !passwordError) {
                         loginViewModel.login(LoginRequest(email, password)) {
-                            println(it)
                             TokenManager(context).apply {
                                 saveToken(it.accessToken)
-                                saveUser(it.user)
                             }
-                            Log.d("LoginScreen", "Login realizado com sucesso. Redirecionando para chat.")
+                            Log.d(
+                                "LoginScreen",
+                                "Login realizado com sucesso. Redirecionando para chat."
+                            )
                             navigation("chat")
                         }
                     }
@@ -177,7 +181,10 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
                 modifier = Modifier
                     .padding(top = 24.dp, bottom = 43.dp)
                     .fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black,
+                    contentColor = Color.White
+                )
             ) {
                 Text("Login")
             }
@@ -261,7 +268,7 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
 fun LoginPreview() {
     MeetTalkTheme {
         val context = LocalContext.current
-        val loginViewModel = LoginViewModel(context)
-        Login(loginViewModel, {})
+        val loginViewModel: LoginViewModel = viewModel()
+        Login(loginViewModel) {}
     }
 }

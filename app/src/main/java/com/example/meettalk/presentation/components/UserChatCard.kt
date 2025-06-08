@@ -2,7 +2,6 @@ package com.example.meettalk.presentation.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -28,27 +27,33 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.request.ImageRequest
 import com.example.meettalk.R
-import com.example.meettalk.data.local.model.entities.ChatEntity
-import com.example.meettalk.data.local.model.entities.UserEntity
+import com.example.meettalk.data.local.model.entities.Chat
+import com.example.meettalk.data.local.model.entities.User
+import com.example.meettalk.presentation.components.images.AsynchronousImageWithErrorPrevention
 import com.example.meettalk.utils.formatToHourMinuteAmPm
 
 @Composable
 fun UserChatCard(
-    user: UserEntity,
-    chat: ChatEntity,
+    user: User,
+    chat: Chat,
     background: Color,
+    token: String,
+    onTapUser: (String) -> Unit = {},
     onLongPress: () -> Unit,
     onTap: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
-    val message = chat.messages.getOrNull(0)
+    val message = chat.messages.last()
     val screenWidth = configuration.screenWidthDp.dp
     val messageNotRead =
         chat.messages.count { it.senderId == user.uuid && !it.isRead }
@@ -98,12 +103,31 @@ fun UserChatCard(
                 modifier = Modifier.width(screenWidth * 0.90f)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painterResource(R.drawable.ic_launcher_background),
+                    val profile = user.profileImages?.getOrNull(0)
+                    val baseUrl = stringResource(R.string.baseUrl)
+                    val model = "$baseUrl/image-profile/${profile?.uuid}"
+                    val imageRequest = ImageRequest.Builder(LocalContext.current)
+                        .data(model)
+                        .addHeader("Authorization", "$token")
+                        .crossfade(true)
+                        .build()
+                    AsynchronousImageWithErrorPrevention(
+                        model = imageRequest,
                         contentDescription = stringResource(R.string.imagem_do_usuario),
+                        placeholder = painterResource(R.drawable.img),
+                        error = painterResource(R.drawable.img),
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(60.dp)
                             .clip(CircleShape)
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = {
+                                        onTapUser(user.uuid)
+                                    }
+                                )
+                            },
+                        imageInCaseOfError = profile?.src
                     )
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(

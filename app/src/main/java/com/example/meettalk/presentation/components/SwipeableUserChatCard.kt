@@ -1,6 +1,5 @@
 package com.example.meettalk.presentation.components
 
-import android.graphics.drawable.GradientDrawable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation

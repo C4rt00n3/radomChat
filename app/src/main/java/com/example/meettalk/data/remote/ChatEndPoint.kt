@@ -3,8 +3,8 @@ package com.example.meettalk.data.remote
 import com.example.meettalk.data.local.model.body.CreateMessage
 import com.example.meettalk.data.local.model.body.DeleteMessageBody
 import com.example.meettalk.data.local.model.body.UpdateMessage
-import com.example.meettalk.data.local.model.entities.ChatEntity
-import com.example.meettalk.data.local.model.entities.MessageEntity
+import com.example.meettalk.data.local.model.entities.Chat
+import com.example.meettalk.data.local.model.entities.Message
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -19,13 +19,13 @@ interface ChatEndPoint {
     @GET("message/{uuid}")
     suspend fun find(
         @Header("Authorization") token: String,
-        @Path("uuid") uuid: UUID
-    ): Response<MessageEntity?>
+        @Path("uuid") uuid: String
+    ): Response<Message?>
 
     @GET("message")
     suspend fun findAll(
         @Header("Authorization") token: String
-    ): Response<List<ChatEntity>>
+    ): Response<List<Chat>>
 
     @HTTP(method = "DELETE", path = "message", hasBody = true)
     suspend fun delete(
@@ -37,14 +37,14 @@ interface ChatEndPoint {
     suspend fun create(
         @Header("Authorization") token: String,
         @Body body: CreateMessage
-    ): Response<MessageEntity>
+    ): Response<Message>
 
     @PATCH("message/{uuid}")
     suspend fun update(
         @Header("Authorization") token: String,
         @Path("uuid") uuid: String,
         @Body body: UpdateMessage
-    ): Response<MessageEntity>
+    ): Response<Message>
 
     @GET("message/markRead/{chat_uuid}")
     suspend fun markRead(

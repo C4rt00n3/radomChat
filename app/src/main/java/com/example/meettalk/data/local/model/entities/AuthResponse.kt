@@ -6,5 +6,5 @@ data class AuthResponse(
     @SerializedName("access_token")
     val accessToken: String,
 
-    val user: UserEntity
+    val user: User
 )

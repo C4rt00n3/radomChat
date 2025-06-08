@@ -1,49 +1,60 @@
 package com.example.meettalk
 
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.meettalk.data.repository.SocketManager
-import com.example.meettalk.presentation.ui.Chat
-import com.example.meettalk.presentation.ui.Login
-import com.example.meettalk.presentation.ui.MessageScreen
-import com.example.meettalk.presentation.viewmodel.BlockViewModel
+import com.example.meettalk.data.local.model.RealmClass.BlockRealm
+import com.example.meettalk.data.local.model.RealmClass.ChatParticipantRealm
+import com.example.meettalk.data.local.model.RealmClass.ChatRealm
+import com.example.meettalk.data.local.model.RealmClass.ImageMessageRealm
+import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
+import com.example.meettalk.data.local.model.RealmClass.LocationRealm
+import com.example.meettalk.data.local.model.RealmClass.MessageRealm
+import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.presentation.viewmodel.ChatViewModel
 import com.example.meettalk.presentation.viewmodel.LoginViewModel
+import com.example.meettalk.presentation.viewmodel.MessageViewModel
+import com.example.meettalk.presentation.viewmodel.UserViewModel
 import com.example.meettalk.ui.theme.MeetTalkTheme
-import com.example.meettalk.utils.TokenManager
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
 
 class MainActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val loginViewModel = LoginViewModel(this)
-        val chatViewModel = ChatViewModel(this)
-        val blockViewModel = BlockViewModel(this)
+        val config = RealmConfiguration.Builder(
+            schema = setOf(
+                UserRealm::class,
+                BlockRealm::class,
+                ChatRealm::class,
+                LocationRealm::class,
+                ImageProfileRealm::class,
+                ChatParticipantRealm::class,
+                ImageMessageRealm::class,
+                MessageRealm::class
+            )
+        )
+            .schemaVersion(1)
+            .deleteRealmIfMigrationNeeded()
+            .build()
+
+        val realm by lazy {
+            Realm.open(config)
+        }
+        val loginViewModel = LoginViewModel(this, realm)
+        val chatViewModel = ChatViewModel(this, realm)
+        val messageViewModel = MessageViewModel(this, realm)
+        val userViewModel = UserViewModel(this, realm)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -54,19 +65,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MeetTalkTheme {
-                AppNavHost(loginViewModel, chatViewModel, blockViewModel)
+                AppNavHost(loginViewModel, chatViewModel, messageViewModel, userViewModel)
             }
         }
-    }
-}
-
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    val context = LocalContext.current
-    MeetTalkTheme {
-        AppNavHost(LoginViewModel(context), ChatViewModel(context), BlockViewModel(context))
     }
 }
