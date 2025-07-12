@@ -6,8 +6,8 @@ import com.example.meettalk.utils.FormatRealm
 data class ChatParticipant(
     val chatId: String,
     val userId: String,
-    val chat: Chat?,
-    val user: User?
+    val chat: Chat? = null,
+    val user: User? = null
 ) {
     private  fun toChatParticipant(chatParticipant: ChatParticipant?): ChatParticipantRealm? {
         if (chatParticipant == null) return null

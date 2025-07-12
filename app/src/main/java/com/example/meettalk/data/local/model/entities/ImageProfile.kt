@@ -1,13 +1,14 @@
 package com.example.meettalk.data.local.model.entities
 
 import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
-import com.example.meettalk.utils.FormatRealm
+import java.util.UUID
 
 data class ImageProfile(
-    val uuid: String = java.util.UUID.randomUUID().toString(),
-    val src: ByteArray?,
+    val uuid: String = UUID.randomUUID().toString(),
+    val src: ByteArray? = null,
     val userUuid: String? = null,
-    val user: User? = null
+    val user: User? = null,
+    val isPrimary: Boolean = false,
 ) {
     private fun toImageProfileImage(profileImage: ImageProfile?): ImageProfileRealm? {
         if (profileImage == null) return null

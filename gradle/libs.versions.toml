@@ -1,12 +1,15 @@
 [versions]
+accompanistPermissions = "0.37.3"
 agp = "8.8.2"
 coilNetworkOkhttp = "3.2.0"
 core = "1.31.1"
 javaJwt = "4.4.0"
 jwtdecode = "2.0.0"
-kotlinxCoroutinesCore = "1.7.0"
+kotlinxCoroutinesCore = "1.8.0"
 materialIconsExtended = "1.7.3"
-realm = "2.0.0"
+pagingRuntime = "3.3.6"
+playServicesLocation = "21.3.0"
+realm = "2.3.0"
 coilCompose = "2.4.0"
 converterGson = "2.9.0"
 kotlin = "2.0.0"
@@ -14,20 +17,23 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.9.0"
+lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
-composeBom = "2025.05.01"
-navigationCompose = "2.9.0"
+composeBom = "2025.06.01"
+navigationCompose = "2.9.1"
 retrofit = "2.9.0"
-securityCrypto = "1.1.0-alpha07"
+securityCrypto = "1.1.0-beta01"
 socketIoClient = "2.1.0"
-roomCommonJvm = "2.7.1"
-roomCompiler = "2.7.1"
-roomRuntimeAndroid = "2.7.1"
+roomCommonJvm = "2.7.2"
+roomCompiler = "2.7.2"
+roomRuntimeAndroid = "2.7.2"
+volley = "1.2.1"
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
@@ -52,16 +58,17 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 library-base = { module = "io.realm.kotlin:library-base", version.ref = "realm" }
 library-sync = { module = "io.realm.kotlin:library-sync", version.ref = "realm" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit2-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIoClient" }
 androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
 androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-realm-orm = {id = "io.realm.kotlin", version.ref = "realm"}
 

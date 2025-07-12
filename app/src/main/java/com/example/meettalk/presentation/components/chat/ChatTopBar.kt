@@ -1,6 +1,9 @@
 package com.example.meettalk.presentation.components.chat
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +17,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meettalk.data.local.model.OptionsMenu
 import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.presentation.components.message.SearchMessagesBar
 import com.example.meettalk.presentation.components.profile.ProfileHeader
+import com.example.meettalk.ui.theme.MeetTalkTheme
 
 private const val HORIZONTAL_PADDING_FRACTION = 0.05f
 private const val TOP_BAR_CONTENT_WIDTH_FRACTION = 0.9f
@@ -56,6 +62,7 @@ fun ChatTopBar(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = modifier
             .fillMaxWidth()
             .padding(start = horizontalPadding, end = horizontalPadding)
@@ -99,3 +106,25 @@ fun Modifier.drawBottomBorder(
         ), end = Offset(size.width, size.height - strokeWidth / 2), strokeWidth = strokeWidth
     )
 })
+
+/**
+ * Preview do Composable `ChatTopBar`.
+ * Permite visualizar o componente no Android Studio sem a necessidade de rodar no dispositivo.
+ */
+@RequiresApi(Build.VERSION_CODES.S)
+@Preview(showBackground = true)
+@Composable
+fun ChatTopBarPreview() {
+    MeetTalkTheme {
+        ChatTopBar(
+            null,
+            token = "",
+            searchQuery = "TODO()",
+            onSearchQueryChanged = {},
+            showInput = false,
+            onClearSearch = {},
+            onProfileClicked = {},
+            optionsMenuItems = listOf()
+        )
+    }
+}

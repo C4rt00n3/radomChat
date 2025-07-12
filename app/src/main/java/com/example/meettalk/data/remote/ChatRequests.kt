@@ -25,7 +25,7 @@ class ChatRequests(private val url: String, private val realm: Realm) {
 
     private val apiServiceChat = retrofit.create(ChatEndPoint::class.java)
 
-    open suspend fun manyRequest(token: String): List<Chat> {
+    suspend fun manyRequest(token: String): List<Chat> {
         val response: Response<List<Chat>> = apiServiceChat.findAll(token)
         if (response.isSuccessful) {
             return response.body() ?: listOf()
@@ -33,28 +33,30 @@ class ChatRequests(private val url: String, private val realm: Realm) {
         return listOf()
     }
 
-    open suspend fun deleteMany(
+    suspend fun deleteMany(
         token: String,
-        list: List<Message>,
-        change: (uuids: List<String>) -> Unit
+        list: List<String>,
+        safe: Boolean,
+        onError: (Exception) -> Unit = {},
+        onSuccess: (uuids: List<String>) -> Unit = {},
     ): Unit {
         try {
-            val uuids = list.map { it.uuid }
-            val body = DeleteMessageBody(uuids)
+            val body = DeleteMessageBody(list)
 
-            val response = apiServiceChat.delete(token, body)
+            val response = apiServiceChat.delete(token, body, safe)
 
             if (response.isSuccessful) {
-                change(uuids)
+                onSuccess(list)
             } else {
                 Log.e("Chat", "Erro ao deletar mensagens: ${response.errorBody()?.string()}")
             }
         } catch (e: Exception) {
             Log.e("Chat", "Exceção ao deletar mensagens: ${e.message}", e)
+            onError(e)
         }
     }
 
-    open suspend fun find(uuid: String, token: String): Message? {
+    suspend fun find(uuid: String, token: String): Message? {
         try {
             return apiServiceChat.find(token, uuid).body()
         } catch (e: Exception) {
@@ -64,9 +66,10 @@ class ChatRequests(private val url: String, private val realm: Realm) {
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    open suspend fun create(
+    suspend fun create(
         token: String,
         data: CreateMessage,
+        finally: () -> Unit = {},
         error: (Exception) -> Unit = {},
         onSuccess: (Message) -> Unit = {}
     ): Message? {
@@ -74,48 +77,51 @@ class ChatRequests(private val url: String, private val realm: Realm) {
             val response = apiServiceChat.create(token, data)
             if (response.isSuccessful) {
                 val newMessage = response.body()
-                newMessage?.let {
-                    onSuccess(it)
-                }
+                if (newMessage != null)
+                    onSuccess(newMessage)
                 newMessage
             } else {
                 Log.d("Error", "Erro na resposta: ${response.code()}")
-                println(response.errorBody()?.string())
-                null
+                throw RuntimeException(
+                    "Erro na resposta: ${response.code()} - ${
+                        response.errorBody()?.string()
+                    }"
+                )
             }
-        } catch (error: Exception) {
-            error(error)
-            Log.d("Error", error.message.orEmpty())
-            error.printStackTrace()
+        } catch (e: Exception) {
+            error(e)
+            Log.d("Error", e.message.orEmpty())
+            e.printStackTrace()
             null
+        } finally {
+            finally()
         }
     }
 
-    open suspend fun update(token: String, id: String, data: UpdateMessage, chat: Chat): Chat? {
+    suspend fun update(
+        token: String,
+        id: String,
+        data: UpdateMessage,
+        onFinally: () -> Unit
+    ): Message? {
         return try {
             val response = apiServiceChat.update(token, id, data)
 
-            if (response.isSuccessful) {
-                val novaMessage = response.body()
-                novaMessage?.let { message ->
-                    return chat.copy(messages = chat.messages.map { msg ->
-                        if (msg.uuid == message.uuid) message else msg
-                    })
-                }
-            } else {
+            if (response.isSuccessful)
+                response.body()
+            else {
                 Log.d("Error", "Erro na resposta: ${response.code()}")
-                println(response.errorBody()?.string())
+                null
             }
-
-            null
         } catch (error: Exception) {
-            println(error)
             Log.d("Error", error.message.toString())
             null
+        } finally {
+            onFinally()
         }
     }
 
-    open suspend fun markRead(
+    suspend fun markRead(
         token: String,
         uuid: String,
         onError: ((Throwable) -> Unit)? = null,
@@ -134,4 +140,73 @@ class ChatRequests(private val url: String, private val realm: Realm) {
             onError?.invoke(error)
         }
     }
+
+    suspend fun listMessageRemoved(token: String, onSuccess: () -> Unit): List<String> {
+        return try {
+            val response = apiServiceChat.listMessageRemoved(token = token)
+
+            if (response.isSuccessful)
+                response.body() ?: emptyList()
+            else {
+                emptyList()
+            }
+        } catch (error: Exception) {
+            Log.d("Error", error.message.orEmpty())
+            error.printStackTrace()
+            emptyList()
+        } finally {
+            onSuccess()
+        }
+    }
+
+    suspend fun listMessagesUpdated(token: String): List<Message> {
+        return try {
+            val response = apiServiceChat.listMessagesUpdated(token)
+            if (response.isSuccessful) {
+                response.body() ?: emptyList()
+            } else {
+                Log.d("API Error", "Erro ${response.code()}: ${response.message()}")
+                emptyList()
+            }
+        } catch (error: Exception) {
+            Log.d("Exception", error.message.orEmpty())
+            error.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun findOneChat(chatUuid: String, token: String): Chat? {
+        return try {
+            val response = apiServiceChat.findOneChat(uuid = chatUuid, token = token)
+
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.d("API Error", "Erro ${response.code()}: ${response.message()}")
+                null
+            }
+        } catch (error: Exception) {
+            Log.d("Exception", error.message.orEmpty())
+            error.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun markFav(uuid: String, token: String): Chat? {
+        return try {
+            val response = apiServiceChat.markFav(uuid = uuid, token = token)
+
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.d("API Error", "Erro ${response.code()}: ${response.message()}")
+                null
+            }
+        } catch (error: Exception) {
+            Log.d("Exception", error.message.orEmpty())
+            error.printStackTrace()
+            null
+        }
+    }
+
 }

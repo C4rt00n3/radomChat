@@ -5,8 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,12 +18,15 @@ import com.example.meettalk.data.local.model.RealmClass.ImageMessageRealm
 import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
 import com.example.meettalk.data.local.model.RealmClass.LocationRealm
 import com.example.meettalk.data.local.model.RealmClass.MessageRealm
+import com.example.meettalk.data.local.model.RealmClass.PreferenceRealm
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
+import com.example.meettalk.data.remote.ChatRequests
 import com.example.meettalk.presentation.viewmodel.ChatViewModel
 import com.example.meettalk.presentation.viewmodel.LoginViewModel
 import com.example.meettalk.presentation.viewmodel.MessageViewModel
 import com.example.meettalk.presentation.viewmodel.UserViewModel
 import com.example.meettalk.ui.theme.MeetTalkTheme
+import com.example.meettalk.utils.TokenManager
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 
@@ -41,20 +44,16 @@ class MainActivity : ComponentActivity() {
                 ImageProfileRealm::class,
                 ChatParticipantRealm::class,
                 ImageMessageRealm::class,
-                MessageRealm::class
+                MessageRealm::class,
+                PreferenceRealm::class
             )
         )
             .schemaVersion(1)
             .deleteRealmIfMigrationNeeded()
             .build()
-
         val realm by lazy {
             Realm.open(config)
         }
-        val loginViewModel = LoginViewModel(this, realm)
-        val chatViewModel = ChatViewModel(this, realm)
-        val messageViewModel = MessageViewModel(this, realm)
-        val userViewModel = UserViewModel(this, realm)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -65,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MeetTalkTheme {
-                AppNavHost(loginViewModel, chatViewModel, messageViewModel, userViewModel)
+                AppNavHost(realm)
             }
         }
     }

@@ -19,9 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meettalk.data.local.model.entities.Chat
-import com.example.meettalk.presentation.ui.MessageScreen
 import com.example.meettalk.ui.theme.MeetTalkTheme
 import com.example.meettalk.ui.theme.TextColorGray
 import com.example.meettalk.utils.formatDateTimeForChat
@@ -34,6 +32,7 @@ fun ChatInfo(
     isChecked: Boolean,
     onSelectAllMyMessages: (Boolean) -> Unit
 ) {
+    val message = chat?.messages?.firstOrNull()
 
     Row(
         modifier = Modifier
@@ -52,14 +51,15 @@ fun ChatInfo(
             },
         horizontalArrangement = Arrangement.Center
     ) {
-        val message = chat?.messages?.firstOrNull()
         if (message == null) {
             Text("Nenhuma mensagem ainda", fontWeight = FontWeight.Bold, color = TextColorGray)
-        } else {
-            val (date, time) = formatDateTimeForChat(message.createdAt)
-            Text("$date $time", fontWeight = FontWeight.Bold, color = TextColorGray)
         }
+//        else {
+//            val (date, time) = formatDateTimeForChat(message.createdAt)
+//            Text("$date $time", fontWeight = FontWeight.Bold, color = TextColorGray)
+//        }
     }
+    if (message != null)
     Row(
         modifier = Modifier
             .fillMaxWidth()

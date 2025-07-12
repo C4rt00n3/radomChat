@@ -3,6 +3,7 @@ package com.example.meettalk.presentation.components.profile
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
@@ -27,9 +28,9 @@ import com.example.meettalk.presentation.viewmodel.UserViewModel
 
 @Composable
 fun ProfileDetailsSection(title: String, userViewModel: UserViewModel) {
-    val user by userViewModel.user.collectAsState(null)
+    val user by userViewModel.myUser.collectAsState(null)
 
-    Column {
+    Column(Modifier.padding(16.dp)) {
         Text(
             text = title,
             color = MaterialTheme.colorScheme.onBackground,
@@ -45,10 +46,9 @@ fun ProfileDetailsSection(title: String, userViewModel: UserViewModel) {
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             },
-            label = "Apelido",
             value = user?.name ?: "Carregando..."
         )
-
+        Spacer(modifier = Modifier.height(8.dp))
         DetailRow(
             icon = {
                 Icon(
@@ -57,10 +57,9 @@ fun ProfileDetailsSection(title: String, userViewModel: UserViewModel) {
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             },
-            label = "Sexo",
             value = "Masculino"
         )
-
+        Spacer(modifier = Modifier.height(8.dp))
         DetailRow(
             icon = {
                 Icon(
@@ -69,8 +68,7 @@ fun ProfileDetailsSection(title: String, userViewModel: UserViewModel) {
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             },
-            label = "Minha idade",
-            value = user?.age.toString() ?: "..."
+            value = (user?.age ?: 18).toString() ?: "..."
         )
     }
 }

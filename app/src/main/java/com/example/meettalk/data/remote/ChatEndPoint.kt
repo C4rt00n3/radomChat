@@ -13,7 +13,9 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.util.UUID
+import kotlin.uuid.Uuid
 
 interface ChatEndPoint {
     @GET("message/{uuid}")
@@ -30,7 +32,8 @@ interface ChatEndPoint {
     @HTTP(method = "DELETE", path = "message", hasBody = true)
     suspend fun delete(
         @Header("Authorization") token: String,
-        @Body body: DeleteMessageBody
+        @Body body: DeleteMessageBody, // Note a vírgula adicionada aqui
+        @Query("safe") safe: Boolean = false // Ajuste aqui para definir o nome e o tipo do parâmetro de query
     ): Response<Unit>
 
     @POST("message")
@@ -57,4 +60,25 @@ interface ChatEndPoint {
         @Header("Authorization") token: String,
     ): Response<Unit>
 
+    @GET("message/listMessageRemoved")
+    suspend fun listMessageRemoved(
+        @Header("Authorization") token: String,
+    ): Response<List<String>>
+
+    @GET("message/list/updated/")
+    suspend fun listMessagesUpdated(
+        @Header("Authorization") token: String,
+    ): Response<List<Message>>
+
+    @GET("chat/{chatUuid}")
+    suspend fun findOneChat(
+        @Path("chatUuid") uuid: String,
+        @Header("Authorization") token: String,
+    ): Response<Chat?>
+
+    @PATCH("chat/{uuid}")
+    suspend fun markFav(
+        @Path("uuid") uuid: String,
+        @Header("Authorization") token: String,
+    ): Response<Chat?>
 }

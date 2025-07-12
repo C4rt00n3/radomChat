@@ -14,6 +14,6 @@ open class ChatRealm : RealmObject {
     var lastMessageDate: String? = ""
 
     var messages: RealmList<MessageRealm> = realmListOf()
-
+    var fav: Boolean = false
     var participants: RealmList<ChatParticipantRealm> = realmListOf()
 }

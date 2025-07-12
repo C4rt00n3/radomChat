@@ -1,16 +1,22 @@
 package com.example.meettalk.presentation.components.chat
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.presentation.components.SwipeableUserChatCard
 import com.example.meettalk.presentation.components.UserChatCard
+import java.time.Instant
 
 private const val SELECTED_CHAT_BACKGROUND_ALPHA = 0.3f
 
@@ -25,7 +31,9 @@ private const val SELECTED_CHAT_BACKGROUND_ALPHA = 0.3f
  * @param onChatTap Callback para quando um chat é tocado.
  * @param onChatLongPress Callback para quando um chat é pressionado longamente.
  * @param onChatSwipeToSelect Callback para quando um chat é selecionado via swipe.
+ * @param navigate NavHostController para navegação.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatList(
     modifier: Modifier = Modifier,
@@ -44,15 +52,16 @@ fun ChatList(
 
     LazyColumn(modifier = modifier) {
         items(
-            chats,
+            items = chats.distinctBy { it.uuid }.sortedByDescending { Instant.parse(it.createdAt) },
             key = { chat -> chat.uuid }
         ) { chat ->
-            val otherUser = chat.participants.find { it.userId != currentUser.uuid }?.user
-
+            val otherUser = chat.participants.firstOrNull { participant ->
+                participant.userId != currentUser.uuid
+            }?.user
             otherUser?.let { user ->
                 val isSelected = selectedChats.contains(chat)
                 val backgroundColor = if (isSelected) {
-                    MaterialTheme.colorScheme.onBackground.copy(alpha = SELECTED_CHAT_BACKGROUND_ALPHA)
+                    MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_CHAT_BACKGROUND_ALPHA)
                 } else {
                     Color.Transparent
                 }
@@ -65,11 +74,15 @@ fun ChatList(
                         chat = chat,
                         token = token,
                         onTap = { onChatTap(chat) },
-                        onTapUser = { navigate.navigate("user/$it") },
+                        onTapUser = { userId -> navigate.navigate("user/$userId") },
                         onLongPress = { onChatLongPress(chat) },
                         background = backgroundColor
                     )
                 }
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                )
             }
         }
     }

@@ -1,6 +1,8 @@
 package com.example.meettalk.presentation.components.profile
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.meettalk.R
+import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.presentation.viewmodel.UserViewModel
 import com.example.meettalk.ui.theme.MeetTalkTheme
 
@@ -66,10 +69,10 @@ private val SCREEN_PADDING = 20.dp
 fun ProfileImageGrid(
     userViewModel: UserViewModel,
     token: String,
-    onImageClick: (String) -> Unit = {},
+    onImageClick: (Int) -> Unit = {},
 ) {
     val baseUrl = stringResource(R.string.baseUrl)
-    val user by userViewModel.user.collectAsState(initial = null)
+    val user by userViewModel.myUser.collectAsState(initial = null)
 
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val totalSpacing = GRID_SPACING * (GRID_COLUMNS - 1)
@@ -98,10 +101,11 @@ fun ProfileImageGrid(
                 label = "1",
                 token = token,
                 imageUrl = imageUrls.getOrElse(0) { "" },
+                imageProfile = user?.profileImages?.getOrNull(0),
                 modifier = Modifier
                     .width(itemSize * 2 + GRID_SPACING)
                     .height(itemSize * 2 + GRID_SPACING),
-                onClick = { onImageClick("1") }
+                onClick = { onImageClick(0) }
             )
 
             Column(
@@ -112,15 +116,17 @@ fun ProfileImageGrid(
                     label = "2",
                     token = token,
                     imageUrl = imageUrls.getOrElse(1) { "" },
+                    imageProfile = user?.profileImages?.getOrNull(1),
                     modifier = Modifier.size(itemSize),
-                    onClick = { onImageClick("2") }
+                    onClick = { onImageClick(1) }
                 )
                 ProfileImageBox(
                     label = "3",
                     token = token,
                     imageUrl = imageUrls.getOrElse(2) { "" },
+                    imageProfile = user?.profileImages?.getOrNull(2),
                     modifier = Modifier.size(itemSize),
-                    onClick = { onImageClick("3") }
+                    onClick = { onImageClick(2) }
                 )
             }
         }
@@ -131,11 +137,12 @@ fun ProfileImageGrid(
         ) {
             (3..5).forEach { index ->
                 ProfileImageBox(
-                    label = (index + 1).toString(),
+                    label = (index).toString(),
                     token = token,
+                    imageProfile = user?.profileImages?.getOrNull(index),
                     imageUrl = imageUrls.getOrElse(index) { "" },
                     modifier = Modifier.size(itemSize),
-                    onClick = { onImageClick((index + 1).toString()) }
+                    onClick = { onImageClick(index) }
                 )
             }
         }
@@ -156,6 +163,7 @@ private fun ProfileImageBox(
     label: String,
     token: String,
     imageUrl: String,
+    imageProfile: ImageProfile? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -167,13 +175,16 @@ private fun ProfileImageBox(
             )
             .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .clickable(onClick = {
+                onClick()
+
+            }),
         contentAlignment = Alignment.Center
     ) {
         if (imageUrl.isNotEmpty()) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
+                    .data(if(imageProfile?.src != null) imageProfile.src else imageUrl)
                     .addHeader("Authorization", token)
                     .crossfade(true)
                     .build(),
@@ -191,11 +202,11 @@ private fun ProfileImageBox(
     }
 }
 
-// --- Preview ---
 /**
  * Preview para o Composable `ProfileImageGrid`.
  * Permite visualizar o componente no Android Studio sem a necessidade de rodar no dispositivo.
  */
+@RequiresApi(Build.VERSION_CODES.S)
 @Preview(showBackground = true)
 @Composable
 fun ProfileImageGridPreview() {

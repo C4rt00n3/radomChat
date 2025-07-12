@@ -29,7 +29,6 @@ fun isJwtExpired(token: String): Boolean {
 
             val currentTime = Date() // Data e hora atual
 
-            // Retorna true se a data de expiração for anterior à data/hora atual
             return expirationDate.before(currentTime)
         } else {
             println("Token JWT não possui a claim 'exp'.")

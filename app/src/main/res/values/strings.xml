@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">MeetTalk</string>
-    <string name="baseUrl">https://82f8-128-201-181-64.ngrok-free.app</string>
+    <string name="baseUrl">https://c8dd58c961a8.ngrok-free.app</string>
     <string name="vis_o_geral">Visão geral</string>
     <string name="desbloquear">Desbloquear</string>
     <string name="bloquear">Bloquear</string>
@@ -23,4 +23,16 @@
     <string name="mensagem">Mensagem</string>
     <string name="mensagem_visualizada">mensagem visualizada</string>
     <string name="mensagem_n_o_visualizada">Mensagem não visualizada</string>
+    <string name="deletar_para_mim">Deletar para mim</string>
+    <string name="limpar_chat">Limpar chat</string>
+    <string name="estar_entre_os_favoritos">estar entre os favoritos</string>
+    <string name="usu_rio_desconhecido">Usuário desconhecido</string>
+
+    <string name="mark_as_seen_icon_description">Marcar como visualizado</string>
+    <string name="mark_as_unseen_option">Não marcar como visto</string>
+    <string name="blocked_users_icon_description">Ícone de usuários bloqueados</string>
+    <string name="blocked_users_option">Usuários bloqueados</string>
+    <string name="user_profile_image_description">Imagem de perfil do usuário</string>
+    <string name="unblock_user_icon_description">Desbloquear usuário</string>
+    <string name="open_options_menu_description">Abrir menu de opções</string>
 </resources>

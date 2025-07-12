@@ -1,6 +1,7 @@
 package com.example.meettalk.data.local.model.entities
 
 import com.example.meettalk.data.local.model.body.enums.State
+import com.example.meettalk.utils.FormatRealm
 
 open class Location(
     var uuid: String,
@@ -11,8 +12,15 @@ open class Location(
     var state: State?,
     var city: String?,
 
-    var users: List<User>
-)
+    var createdAt: Long = System.currentTimeMillis(),
+    var updatedAt: Long = System.currentTimeMillis(),
+
+    var user: User? = null,
+    var userId: String? = null
+
+){
+    fun toLocation() = FormatRealm().toLocation(this)
+}
 
 
 

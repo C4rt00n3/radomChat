@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +54,7 @@ fun UserChatCard(
     onTap: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
-    val message = chat.messages.last()
+    val message = chat.messages.lastOrNull()
     val screenWidth = configuration.screenWidthDp.dp
     val messageNotRead =
         chat.messages.count { it.senderId == user.uuid && !it.isRead }
@@ -104,15 +105,9 @@ fun UserChatCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val profile = user.profileImages?.getOrNull(0)
-                    val baseUrl = stringResource(R.string.baseUrl)
-                    val model = "$baseUrl/image-profile/${profile?.uuid}"
-                    val imageRequest = ImageRequest.Builder(LocalContext.current)
-                        .data(model)
-                        .addHeader("Authorization", "$token")
-                        .crossfade(true)
-                        .build()
                     AsynchronousImageWithErrorPrevention(
-                        model = imageRequest,
+                        imageProfile = profile,
+                        token = token,
                         contentDescription = stringResource(R.string.imagem_do_usuario),
                         placeholder = painterResource(R.drawable.img),
                         error = painterResource(R.drawable.img),
@@ -127,7 +122,7 @@ fun UserChatCard(
                                     }
                                 )
                             },
-                        imageInCaseOfError = profile?.src
+//                        imageInCaseOfError = profile?.src
                     )
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -173,4 +168,5 @@ fun UserChatCard(
             }
         }
     }
+    HorizontalDivider(thickness = 2.dp)
 }

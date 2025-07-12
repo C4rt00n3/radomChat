@@ -3,6 +3,7 @@ package com.example.meettalk.presentation.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Icon
@@ -17,7 +18,7 @@ import com.example.meettalk.R
 
 @Composable
 fun SearchPreferencesSection() {
-    Column {
+    Column(Modifier.padding(16.dp)) {
         Text(
             text = "PROCURO",
             color = Color(0xFFB085F5),
@@ -26,10 +27,13 @@ fun SearchPreferencesSection() {
         Spacer(modifier = Modifier.height(8.dp))
 
         DetailRow(icon = {
-            Icon(painter = painterResource(R.drawable.baseline_face_3_24,), contentDescription = "")
-        }, label = "Sexo", value = "Feminino")
-        DetailRow(icon = {
-            Icon(Icons.Default.DateRange, contentDescription = "Idade de")
-        }, label = "Idade de", value = "18", trailingCheck = true)
+            Icon(painter = painterResource(R.drawable.baseline_face_3_24), contentDescription = "")
+        }, value = "Feminino")
+        Spacer(modifier = Modifier.height(8.dp))
+        DetailRow(
+            icon = {
+                Icon(Icons.Default.DateRange, contentDescription = "Idade de")
+            }, value = "18"
+        )
     }
 }

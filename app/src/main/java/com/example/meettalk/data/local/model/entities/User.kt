@@ -12,7 +12,11 @@ data class User(
     val age: Int,
     val gender: Gender? = Gender.M,          // assumindo enum Gender com M como default
     val chatParticipants: List<ChatParticipant> = emptyList(),
+    val preference: Preference? = null,
+    val preferenceUuid: String? = null,
     val profileImages: List<ImageProfile> = emptyList(),
+    val location: Location? = null,
+    val locationId: String? = null
 ) {
     private fun toUserRealm(user: User?): UserRealm? {
         if (user == null) return null
@@ -21,6 +25,10 @@ data class User(
             name = user.name
             gender = user.gender?.name ?: Gender.M.name
             age = user.age
+            locationId = user.locationId
+            preferenceUuid = user.preferenceUuid
+            preference = user.preference?.toPreference()
+            location = user.location?.toLocation()
             profileImages = realmListOf(
                 *user.profileImages.orEmpty()
                     .mapNotNull { it.toRealm() }

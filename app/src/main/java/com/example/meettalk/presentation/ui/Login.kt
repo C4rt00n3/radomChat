@@ -1,6 +1,8 @@
 package com.example.meettalk.presentation.ui
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +38,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,15 +47,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meettalk.R
 import com.example.meettalk.data.local.model.body.LoginRequest
 import com.example.meettalk.presentation.viewmodel.LoginViewModel
+import com.example.meettalk.presentation.viewmodel.UserViewModel
 import com.example.meettalk.ui.theme.ButtonColorGray
 import com.example.meettalk.ui.theme.DarkBlueLine
 import com.example.meettalk.ui.theme.MeetTalkTheme
 import com.example.meettalk.ui.theme.TextColorGray
 import com.example.meettalk.ui.theme.TextColorGrayLight
 import com.example.meettalk.utils.TokenManager
+import io.realm.kotlin.Realm
 
 @Composable
-fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
+fun Login(
+    realm: Realm? = null,
+    loginViewModel: LoginViewModel = viewModel(),
+    navigation: (route: String) -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -63,6 +73,13 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
 
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
+
+    LaunchedEffect(Unit) {
+        loginViewModel.build(
+            context = context,
+            realm = realm
+        )
+    }
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
@@ -169,6 +186,7 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
                         loginViewModel.login(LoginRequest(email, password)) {
                             TokenManager(context).apply {
                                 saveToken(it.accessToken)
+                                saveUser(it.user)
                             }
                             Log.d(
                                 "LoginScreen",
@@ -263,12 +281,11 @@ fun Login(loginViewModel: LoginViewModel, navigation: (route: String) -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Preview(showBackground = true)
 @Composable
 fun LoginPreview() {
     MeetTalkTheme {
-        val context = LocalContext.current
-        val loginViewModel: LoginViewModel = viewModel()
-        Login(loginViewModel) {}
+        Login {}
     }
 }

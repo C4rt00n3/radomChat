@@ -16,20 +16,26 @@ class MessageRealm: RealmObject {
     var type: String= "TEXT"
     var url: String? = null
 
-    var chatId: String = ""
+    var chatId: String? = ""
     var createdAt: String = ""
 
     var senderId: String = ""
-    var receiverId: String? = null
+    var receiverId: String = ""
 
     var chat: ChatRealm? = null
 
+    var isSend: Boolean = true
     var isRead: Boolean = false
+
 
     var replyToId: String? = null
     var replyTo: MessageRealm? = null
 
     var replies: RealmList<MessageRealm> = realmListOf()
+
+    var isUpdate: Boolean = false
+    var updateAt: String? = null
+    var countUpdate: Int = 0
 
     fun toClass() = format.fromMessageRealm(this)
 }

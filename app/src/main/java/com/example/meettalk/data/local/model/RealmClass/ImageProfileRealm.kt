@@ -16,4 +16,6 @@ open class ImageProfileRealm : RealmObject {
     var userUuid: String? = null
 
     var user: UserRealm? = null
+
+    var isPrimary: Boolean = false
 }

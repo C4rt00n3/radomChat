@@ -8,13 +8,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.example.meettalk.R
 import com.example.meettalk.data.local.model.OptionsMenu
 import com.example.meettalk.data.local.model.entities.User
@@ -51,22 +47,14 @@ fun ProfileHeader(
             onClick = onProfileClicked,
             modifier = Modifier.border(PROFILE_IMAGE_BORDER_SIZE, TextColorGray, CircleShape)
         ) {
-            val baseUrl = stringResource(R.string.baseUrl)
-            val profile =  user?.profileImages?.firstOrNull()
-            val imageUrl =
-               profile?.uuid.let { "$baseUrl/image-profile/$it" }
-
+            val profile =
+                user?.profileImages?.find { it.isPrimary } ?: user?.profileImages?.firstOrNull()
             AsynchronousImageWithErrorPrevention(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
-                    .addHeader("Authorization", token)
-                    .crossfade(true)
-                    .build(),
+                imageProfile = profile,
+                token = token,
                 contentDescription = stringResource(R.string.imagem_do_usu_rio),
-                placeholder = painterResource(R.drawable.img), // Use um placeholder adequado
-                error = painterResource(R.drawable.img), // Use uma imagem de erro adequada
-                contentScale = ContentScale.Crop,
-                imageInCaseOfError = profile?.src
+                placeholder = painterResource(R.drawable.img),
+                error = painterResource(R.drawable.img),
             )
         }
         MenuSelect(optionsMenuItems)

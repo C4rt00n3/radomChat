@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime.android)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.security.crypto)
@@ -81,6 +82,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
+    implementation(libs.androidx.paging.runtime)
     implementation (libs.library.base)
     implementation (libs.library.sync)
     // If using coroutines with the SDK
@@ -90,5 +92,8 @@ dependencies {
     implementation(libs.core)
     implementation(libs.jwtdecode)
     implementation(libs.java.jwt)
+
+    implementation (libs.accompanist.permissions)
+    implementation(libs.play.services.location)
 
 }

@@ -18,3 +18,11 @@ val TextColorGray = Color(0xFF64748B)
 val ButtonColorGray = Color(0xFFF1F5F9)
 val TextColorGrayLight = Color(0xFF828282)
 val MessageColor = Color(0xFF224d52)
+
+val SecondaryBlackBackground = Color(0xFF131313)
+val SecondaryLightBackground = Color(0xFFDCDCDC)
+
+val BackgroundLight = Color(0xFFFFFAFA)
+val BackgroundBlack = Color(0xFF363636)
+val BackgroundSecondaryBlack = Color(0xFF1C1C1C)
+val BackgroundSecondaryLight = Color(0xFFF8F8FF)

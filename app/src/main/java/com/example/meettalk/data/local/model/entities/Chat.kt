@@ -7,6 +7,7 @@ data class Chat(
     val uuid: String,
     val createdAt: String,
     val lastMessageDate: String?,
-    val messages: List<Message>,
+    val messages: List<Message> = emptyList(),
     val participants: List<ChatParticipant>,
+    val fav: Boolean = false
 )
