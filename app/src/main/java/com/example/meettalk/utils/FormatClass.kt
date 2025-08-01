@@ -3,42 +3,27 @@ package com.example.meettalk.utils
 import com.example.meettalk.data.local.model.RealmClass.BlockRealm
 import com.example.meettalk.data.local.model.RealmClass.ChatParticipantRealm
 import com.example.meettalk.data.local.model.RealmClass.ChatRealm
+import com.example.meettalk.data.local.model.RealmClass.ImageMessageRealm
 import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
 import com.example.meettalk.data.local.model.RealmClass.LocationRealm
 import com.example.meettalk.data.local.model.RealmClass.MessageRealm
 import com.example.meettalk.data.local.model.RealmClass.PreferenceRealm
+import com.example.meettalk.data.local.model.RealmClass.PrivacyUserRealm
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.data.local.model.body.enums.Gender
 import com.example.meettalk.data.local.model.body.enums.MessageType
-import com.example.meettalk.data.local.model.body.enums.State
 import com.example.meettalk.data.local.model.entities.Block
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.ChatParticipant
-import com.example.meettalk.data.local.model.entities.ImageProfile
+import com.example.meettalk.data.local.model.entities.ImageMessage
 import com.example.meettalk.data.local.model.entities.Location
 import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.Preference
+import com.example.meettalk.data.local.model.entities.PrivacyUser
 import com.example.meettalk.data.local.model.entities.User
 
 class FormatClass {
-    fun fromMessageRealm(messageRealm: MessageRealm): Message {
-        return Message(
-            uuid = messageRealm.uuid,
-            text = messageRealm.text,
-            type = enumValueOfOrNull<MessageType>(messageRealm.type) ?: MessageType.TEXT,
-            url = messageRealm.url,
-            chatId = messageRealm.chatId,
-            createdAt = messageRealm.createdAt,
-            senderId = messageRealm.senderId,
-            receiverId = messageRealm.receiverId,
-            isRead = messageRealm.isRead,
-            replyToId = messageRealm.replyToId,
-            isUpdate = messageRealm.isUpdate,
-            countUpdate = messageRealm.countUpdate,
-            updateAt = messageRealm.updateAt,
-            isSend = messageRealm.isSend
-        )
-    }
+
 
     /**
      * Converte um objeto [LocationRealm] (Realm database object) para um objeto [Location] (domain model).
@@ -50,7 +35,7 @@ class FormatClass {
         uuid = locationRealm.uuid,
         latitude = locationRealm.latitude,
         longitude = locationRealm.longitude,
-        state = State.entries.find { it.name == locationRealm.state },
+        state = locationRealm.state,
         city = locationRealm.city,
         createdAt = locationRealm.createdAt,
         updatedAt = locationRealm.updatedAt,
@@ -66,35 +51,54 @@ class FormatClass {
         )
     }
 
-    fun fromUserRealm(userRealm: UserRealm): User {
+    fun fromUserRealm(userRealm: UserRealm): User? {
         return User(
             uuid = userRealm.uuid,
             name = userRealm.name,
             gender = enumValueOfOrNull<Gender>(userRealm.gender) ?: Gender.M,
-            preferenceUuid = userRealm.preferenceUuid,
-            preference = userRealm.preference?.let { fromPreference(it) },
+            preference = userRealm.preference.let { fromPreference(it!!) },
             location = userRealm.location?.let { fromLocationRealm(it) },
-            locationId = userRealm.locationId,
-            age = userRealm.age,
-            profileImages = userRealm.profileImages.map { fromImageProfileRealm(it) },
+            birthDate = userRealm.birthDate,
+            profileImages = userRealm.profileImages.map { it.toClass() },
+            updateAt = userRealm.updateAt,
+            createAt = userRealm.createAt,
+            privacyUser = userRealm.privacyUser?.let { fromPrivacyUserRealm(it) }
         )
     }
 
-    fun toPreference(preference: Preference): PreferenceRealm {
-        return PreferenceRealm().apply {
-            uuid = preference.uuid
-            gender = if (preference.gender.name == "M") Gender.M.name else Gender.F.name
-            maxAge = preference.maxAge
+    fun fromPrivacyUserRealm(privacyUserRealm: PrivacyUserRealm): PrivacyUser {
+        return PrivacyUser(
+            uuid = privacyUserRealm.uuid,
+            noMarkRead = privacyUserRealm.noMarkRead,
+            imageBreak = privacyUserRealm.imageBreak,
+            talkBreak = privacyUserRealm.talkBreak
+        )
+    }
+
+    fun fromMessageRealm(messageRealm: MessageRealm): Message? {
+        return try {
+            Message(
+                uuid = messageRealm.uuid,
+                text = messageRealm.text,
+                type = enumValueOfOrNull<MessageType>(messageRealm.type) ?: MessageType.TEXT,
+                url = messageRealm.url,
+                ImageMessage = messageRealm.ImageMessage?.let { fromImageMessage(it) },
+                chatId = messageRealm.chatId,
+                createdAt = messageRealm.createdAt,
+                senderId = messageRealm.senderId,
+                receiverId = messageRealm.receiverId,
+                isRead = messageRealm.isRead,
+                replyToId = messageRealm.replyToId,
+                isUpdate = messageRealm.isUpdate,
+                countUpdate = messageRealm.countUpdate,
+                updateAt = messageRealm.updateAt,
+                isSend = messageRealm.isSend
+            )
+        } catch (e: Exception) {
+            println(e.message)
+            println(e)
+            null
         }
-    }
-
-    fun fromImageProfileRealm(profileImageRealm: ImageProfileRealm): ImageProfile {
-        return ImageProfile(
-            uuid = profileImageRealm.uuid,
-            userUuid = profileImageRealm.userUuid,
-            src = profileImageRealm.src,
-            isPrimary = profileImageRealm.isPrimary
-        )
     }
 
     fun fromChatRealm(chatRealm: ChatRealm): Chat {
@@ -103,8 +107,12 @@ class FormatClass {
             createdAt = chatRealm.createdAt,
             lastMessageDate = chatRealm.lastMessageDate,
             fav = chatRealm.fav,
-            messages = chatRealm.messages.map { fromMessageRealm(it) },
-            participants = chatRealm.participants.map { fromChatParticipantRealm(it) }
+            messages = chatRealm.messages
+                .mapNotNull { fromMessageRealm(it) }
+                .distinctBy { it.uuid },
+            participants = chatRealm.participants
+                .map { fromChatParticipantRealm(it) }
+                .distinctBy { it.userId }
         )
     }
 
@@ -123,6 +131,21 @@ class FormatClass {
         blockedUserId = blockRealm.blockedUserId,
         blockedUser = blockRealm.blockedUser?.toClass()
     )
+
+    fun fromImageMessage(imageMessageRealm: ImageMessageRealm): ImageMessage? {
+        return try {
+            ImageMessage(
+                uuid = imageMessageRealm.uuid,
+                src = imageMessageRealm.src,
+                user = imageMessageRealm.user?.toClass(),
+                message = null,
+            )
+        } catch (e: Exception) {
+            println(e.message)
+            println(e)
+            null
+        }
+    }
 
     inline fun <reified T : Enum<T>> enumValueOfOrNull(name: String?): T? {
         return try {

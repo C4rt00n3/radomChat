@@ -25,6 +25,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.meettalk.R
+import com.example.meettalk.data.local.model.entities.ImageMessage
 import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.presentation.viewmodel.UserViewModel
 import com.example.meettalk.utils.downloadImageAsByteArray
@@ -33,7 +34,7 @@ import java.io.ByteArrayOutputStream
 
 @Composable
 fun AsynchronousImageWithErrorPrevention(
-    imageProfile: ImageProfile?,
+    imageProfile: ImageProfile? = null,
     downloadOn: Boolean = true,
     token: String,
     contentDescription: String?,
@@ -44,7 +45,7 @@ fun AsynchronousImageWithErrorPrevention(
     onLoading: ((AsyncImagePainter.State.Loading) -> Unit)? = null,
     onSuccess: ((AsyncImagePainter.State.Success) -> Unit)? = null,
     onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
-    onBytesReady: ((ByteArray?) -> Unit)? = null, // <-- novo parâmetro
+    onBytesReady: ((ByteArray?) -> Unit)? = null,
     alignment: Alignment = Alignment.Center,
     contentScale: ContentScale = ContentScale.Fit,
     alpha: Float = DefaultAlpha,
@@ -66,7 +67,7 @@ fun AsynchronousImageWithErrorPrevention(
         }.build()
     }
 
-    LaunchedEffect(url, token) {
+    LaunchedEffect(url, token, imageProfile) {
         if (imageProfile == null) return@LaunchedEffect
         if (imageProfile.src == null && downloadOn) {
             try {
@@ -85,6 +86,8 @@ fun AsynchronousImageWithErrorPrevention(
                     println("Falha ao obter bitmap do drawable: ${result.drawable}")
                 }
             } catch (e: Exception) {
+                println(url)
+                println("Não baixou")
                 e.printStackTrace()
                 println("Erro ao baixar imagem: ${e.message}")
             }

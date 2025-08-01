@@ -21,8 +21,10 @@ data class Message(
     val isSend: Boolean = true,
     val isUpdate: Boolean = false,
     val updateAt: String? = null,
+    val ImageMessage: ImageMessage? = null,
     val countUpdate: Int = 0,
 ) {
+    val format = FormatRealm()
     private fun toMessageRealm(message: Message?): MessageRealm? {
         if (message == null) return null
         return MessageRealm().apply {
@@ -35,6 +37,7 @@ data class Message(
             senderId = message.senderId.toString()
             receiverId = message.receiverId
             isRead = message.isRead
+            ImageMessage = message.ImageMessage?.let { format.toImageMessage(it) }
             replyToId = message.replyToId
         }
     }

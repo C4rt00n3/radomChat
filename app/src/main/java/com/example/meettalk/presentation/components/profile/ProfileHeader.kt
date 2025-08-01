@@ -48,7 +48,7 @@ fun ProfileHeader(
             modifier = Modifier.border(PROFILE_IMAGE_BORDER_SIZE, TextColorGray, CircleShape)
         ) {
             val profile =
-                user?.profileImages?.find { it.isPrimary } ?: user?.profileImages?.firstOrNull()
+                user?.profileImages?.find { it.slot == 1 } ?: user?.profileImages?.firstOrNull()
             AsynchronousImageWithErrorPrevention(
                 imageProfile = profile,
                 token = token,

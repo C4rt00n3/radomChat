@@ -1,6 +1,7 @@
 package com.example.meettalk.presentation.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -16,6 +17,7 @@ import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
 import com.example.meettalk.data.local.model.RealmClass.LocationRealm
 import com.example.meettalk.data.local.model.RealmClass.MessageRealm
 import com.example.meettalk.data.local.model.RealmClass.PreferenceRealm
+import com.example.meettalk.data.local.model.RealmClass.PrivacyUserRealm
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.data.local.model.body.CreateMessage
 import com.example.meettalk.data.local.model.body.UpdateMessage
@@ -27,6 +29,7 @@ import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.data.remote.ChatEndPoint
 import com.example.meettalk.data.remote.ChatRequests
+import com.example.meettalk.data.remote.UserRequests
 import com.example.meettalk.utils.FormatClass
 import com.example.meettalk.utils.FormatRealm
 import com.example.meettalk.utils.TaskManager
@@ -43,6 +46,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Instant
@@ -70,6 +74,7 @@ class MessageViewModel(
     private lateinit var retrofit: Retrofit
     private lateinit var apiServiceChat: ChatEndPoint
     private lateinit var chatRequests: ChatRequests
+    private lateinit var usersRequests: UserRequests
     private lateinit var context: Context
 
     fun build(context: Context, realm: Realm? = null) {
@@ -86,6 +91,7 @@ class MessageViewModel(
                     ImageMessageRealm::class,
                     PreferenceRealm::class,
                     MessageRealm::class,
+                    PrivacyUserRealm::class
                 )
             ).schemaVersion(1).deleteRealmIfMigrationNeeded().build()
             Realm.open(config)
@@ -100,6 +106,7 @@ class MessageViewModel(
 
         this.realm.let {
             this.chatRequests = ChatRequests(url, it)
+            this.usersRequests = UserRequests(url, it)
         }
 
         viewModelScope.launch(Dispatchers.Default) {
@@ -140,12 +147,15 @@ class MessageViewModel(
      * @param onFinished Callback opcional que será chamado após a conclusão da inserção.
      */
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    @JvmOverloads
     fun createMessage(
-        token: String, message: Message, currentUser: User, onFinished: (Chat?) -> Unit
+        token: String,
+        message: Message,
+        currentUser: User,
+        file: MultipartBody.Part?,
+        onFinished: (Chat?) -> Unit
     ) {
         viewModelScope.launch {
-            insertInDatabase(token, message,currentUser, onFinished)
+            insertInDatabase(token, message, currentUser, file = file,onFinished)
         }
     }
 
@@ -243,9 +253,13 @@ class MessageViewModel(
      */
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private suspend fun insertInDatabase(
-        token: String, message: Message, currentUser: User?, onFinished: (Chat?) -> Unit
+        token: String,
+        message: Message,
+        currentUser: User?,
+        file: MultipartBody.Part? = null,
+        onFinished: (Chat?) -> Unit
     ) {
-        chatRequests.create(token, convertMessage(message)) { mess ->
+        chatRequests.create(token, convertMessage(message), file = file) { mess ->
             try {
                 realm.writeBlocking {
                     if (message.chatId == null) {
@@ -290,6 +304,7 @@ class MessageViewModel(
                     }
                 }
             } catch (e: Exception) {
+                showToast("Error ao enviar mensagem!")
                 e.printStackTrace()
             }
         }
@@ -297,10 +312,10 @@ class MessageViewModel(
 
     fun getImageProfileRealm(uuid: String, onSuccess: (ImageProfile) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            realm.write { // Problema 1: 'write' bloqueia e não é o ideal para leitura
+            realm.write {
                 val get =
                     this.query<ImageProfileRealm>("uuid == $0", uuid).first().find()
-                val formated = get?.let { formatR.fromImageProfileRealm(it) }
+                val formated = get?.toClass()
 
                 formated?.let {
                     onSuccess(it)
@@ -400,12 +415,10 @@ class MessageViewModel(
         _chat.value = chat
     }
 
-    private fun findChat(uuid: String, onSuccess: (Chat) -> Unit) {
-        val chatRealm = realm.query<ChatRealm>("uuid == $0", uuid).first().find()
-
-        if (chatRealm != null) {
-            onSuccess(formatR.fromChatRealm(chatRealm))
-        }
+    private fun findChat(uuid: String): Chat? {
+       return  realm.query<ChatRealm>("uuid == $0", uuid).first().find()?.let {
+           formatR.fromChatRealm(it)
+       }
     }
 
     /**
@@ -425,9 +438,11 @@ class MessageViewModel(
         realm.query<ChatRealm>().asFlow().collect { result ->
             val chats = result.list
             if (chats.isNotEmpty()) {
-                findChat(uuid) { chat ->
+                findChat(uuid)?.let { chat ->
                     onChange(chat)
+
                     val messages = chat.messages.filter { !it.isSend }
+
                     messages.forEach {
                         _taskManager.addTask { sendMessageNotSend(it) }
                     }
@@ -523,6 +538,16 @@ class MessageViewModel(
                     }
                 }
             }
+        }
+    }
+
+    fun findUser(user: User): User? {
+        return  try {
+            val token = _token.value
+            null
+        } catch (e: Exception) {
+            println(e.message)
+            null
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.meettalk.data.local.model.RealmClass
 
+import com.example.meettalk.utils.FormatClass
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -16,4 +17,9 @@ open class ChatRealm : RealmObject {
     var messages: RealmList<MessageRealm> = realmListOf()
     var fav: Boolean = false
     var participants: RealmList<ChatParticipantRealm> = realmListOf()
+
+    @Transient
+    val format = FormatClass()
+
+    fun toRealm() = format.fromChatRealm(this)
 }

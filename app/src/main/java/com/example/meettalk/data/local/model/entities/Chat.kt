@@ -10,4 +10,8 @@ data class Chat(
     val messages: List<Message> = emptyList(),
     val participants: List<ChatParticipant>,
     val fav: Boolean = false
-)
+) {
+    val format = FormatRealm()
+
+    fun toRealm() = format.toChat(this)
+}

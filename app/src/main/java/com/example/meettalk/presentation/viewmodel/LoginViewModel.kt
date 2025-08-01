@@ -1,7 +1,9 @@
 package com.example.meettalk.presentation.viewmodel
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meettalk.R
@@ -24,11 +26,26 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.UpdatePolicy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.PasswordCredential
+import androidx.credentials.PublicKeyCredential
+import androidx.credentials.exceptions.GetCredentialException
+import com.example.meettalk.data.local.model.RealmClass.PrivacyUserRealm
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import kotlinx.coroutines.coroutineScope
+import kotlin.math.sign
 
 
 class LoginViewModel : ViewModel() {
@@ -71,7 +88,8 @@ class LoginViewModel : ViewModel() {
                     ChatParticipantRealm::class,
                     ImageMessageRealm::class,
                     MessageRealm::class,
-                    PreferenceRealm::class
+                    PreferenceRealm::class,
+                    PrivacyUserRealm::class
                 )
             ).schemaVersion(1).deleteRealmIfMigrationNeeded().build()
 
@@ -86,10 +104,40 @@ class LoginViewModel : ViewModel() {
         this.url = url
     }
 
+    suspend fun singInGoogle(token: String): AuthResponse? {
+        return try {
+            val response = apiService.singInGoogle("Bearer $token")
+            println(response.body())
+            if (response.isSuccessful) {
+                val result = response.body()
+                if (result != null) {
+                    _loginResult.value = result
+                    saveUserToRealm(result.user)
+                    result
+                } else {
+                    val errorMsg = "Resposta bem-sucedida, mas corpo do resultado é nulo."
+                    _loginResult.value = null
+                    Log.e("Login", errorMsg)
+                    null
+                }
+            } else {
+                _loginResult.value = null
+                val errorMsg = response.errorBody()?.string() ?: "Erro desconhecido na resposta (sem corpo)."
+                Log.e("Login", "Erro HTTP no Login Google: Código ${response.code()} - $errorMsg")
+                null
+            }
+        } catch (e: Exception) {
+            _loginResult.value = null
+            Log.e("Login", "Erro na requisição de Login Google", e)
+            null
+        }
+    }
+
     fun login(body: LoginRequest, onFinished: (AuthResponse) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = apiService.login(body) // 'apiService' só será inicializado aqui, após a 'url' ser definida
+                val response =
+                    apiService.login(body) // 'apiService' só será inicializado aqui, após a 'url' ser definida
                 val result = response.body()
 
                 if (response.isSuccessful && result != null) {
@@ -116,6 +164,7 @@ class LoginViewModel : ViewModel() {
             try {
                 realm.write {
                     val userRealm = formatRealm.toUserRealm(user)
+
                     userRealm?.let {
                         it.owner = true
                         copyToRealm(it, UpdatePolicy.ALL)

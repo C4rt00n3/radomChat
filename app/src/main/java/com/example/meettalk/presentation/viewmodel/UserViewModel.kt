@@ -2,10 +2,9 @@ package com.example.meettalk.presentation.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
+import android.os.Build
 import android.util.Log
-import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meettalk.R
@@ -17,12 +16,12 @@ import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
 import com.example.meettalk.data.local.model.RealmClass.LocationRealm
 import com.example.meettalk.data.local.model.RealmClass.MessageRealm
 import com.example.meettalk.data.local.model.RealmClass.PreferenceRealm
+import com.example.meettalk.data.local.model.RealmClass.PrivacyUserRealm
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.data.local.model.body.CreateLocation
 import com.example.meettalk.data.local.model.body.UpdateUser
-import com.example.meettalk.data.local.model.body.enums.Gender
-import com.example.meettalk.data.local.model.body.enums.State
 import com.example.meettalk.data.local.model.entities.Block
+import com.example.meettalk.data.local.model.entities.ImageMessage
 import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.data.local.model.entities.Location
 import com.example.meettalk.data.local.model.entities.User
@@ -30,12 +29,15 @@ import com.example.meettalk.data.remote.ChatEndPoint
 import com.example.meettalk.data.remote.ChatRequests
 import com.example.meettalk.data.remote.UserRequests
 import com.example.meettalk.data.remote.UsersEndpoints
+import com.example.meettalk.presentation.components.UiState
 import com.example.meettalk.utils.FormatClass
 import com.example.meettalk.utils.FormatRealm
 import com.example.meettalk.utils.TaskManager
 import com.example.meettalk.utils.TokenManager
 import com.example.meettalk.utils.getAddressFromLocation
 import com.example.meettalk.utils.getSubFromJwt
+import com.example.meettalk.utils.showToast
+import com.example.meettalk.utils.users.updateUserInRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.UpdatePolicy
@@ -70,33 +72,10 @@ class UserViewModel : ViewModel() {
     private val _myUser = MutableStateFlow<User?>(null)
     val myUser: StateFlow<User?> = _myUser.asStateFlow()
 
-    /**
-     * Classe selada que representa os diferentes estados da UI ao carregar os dados do usuário.
-     * Isso permite que a UI reaja a carregamento, sucesso ou erros.
-     */
-    sealed class UiState {
-        data object Loading : UiState()
-        data class Success(
-            val user: User = User(
-                uuid = "123e4567-e89b-12d3-a456-426614174000",
-                name = "Carregando...",
-                age = 28,
-                gender = Gender.F,
-                chatParticipants = listOf(),
-                profileImages = listOf(
-                    ImageProfile(
-                        uuid = "1fe6efc5-d3eb-45c7-aab3-eb791e847a6e",
-                        src = null,
-                        userUuid = "123e4567-e89b-12d3-a456-426614174000"
-                    )
-                )
-            )
-        ) : UiState()
-
-        data class Error(val message: String) : UiState()
-    }
-
+    @RequiresApi(Build.VERSION_CODES.O)
     private val _uiState = MutableStateFlow<UiState>(UiState.Success())
+
+    @RequiresApi(Build.VERSION_CODES.O)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     private val _token = MutableStateFlow("")
@@ -111,6 +90,16 @@ class UserViewModel : ViewModel() {
     private val _blocks = MutableStateFlow(emptyList<Block>())
     val blocks = _blocks.asStateFlow()
 
+    fun getImageMessage(uuid: String): ImageMessage? {
+        return try {
+            realm.query<ImageMessageRealm>("uuid == $0", uuid).find().firstOrNull()
+                ?.let { formatR.fromImageMessage(it) }
+        } catch (error: Exception) {
+            println(error.message)
+            null
+        }
+    }
+
     /**
      * Constrói e inicializa as dependências do ViewModel.
      * Esta função deve ser chamada uma única vez quando o ViewModel é criado.
@@ -118,6 +107,7 @@ class UserViewModel : ViewModel() {
      * @param context Contexto da aplicação, necessário para acessar recursos e TokenManager.
      * @param realm Instância opcional do Realm. Se nula, uma nova instância será aberta.
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     fun build(context: Context, realm: Realm? = null) {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
@@ -133,7 +123,8 @@ class UserViewModel : ViewModel() {
                             ChatParticipantRealm::class,
                             ImageMessageRealm::class,
                             MessageRealm::class,
-                            PreferenceRealm::class
+                            PreferenceRealm::class,
+                            PrivacyUserRealm::class
                         )
                     ).schemaVersion(1).deleteRealmIfMigrationNeeded().build()
 
@@ -201,7 +192,6 @@ class UserViewModel : ViewModel() {
     /**
      * Copia o conteúdo de um Uri para um arquivo temporário no diretório de cache do aplicativo.
      *
-     * @param context O contexto da aplicação.
      * @param uri O Uri do arquivo original.
      * @return Um objeto File temporário contendo os dados, ou null em caso de erro.
      * É responsabilidade do chamador deletar este arquivo após o uso.
@@ -242,42 +232,85 @@ class UserViewModel : ViewModel() {
         _users.value = list
     }
 
-    private fun saveProfileImageApi(imageUri: Uri, uuid: String? = null) {
+    private fun saveProfileImageApi(imageUri: Uri, uuid: String? = null, slot: Int = 0) {
         viewModelScope.launch {
             val contentResolver = context.contentResolver
             val type = contentResolver.getType(imageUri) ?: "image/jpeg"
-            val file = context.getTempFileFromUri(imageUri)
-            val requestFile = file.asRequestBody(type.toMediaTypeOrNull())
+
+            val tempFile = context.getTempFileFromUri(imageUri)
 
             try {
-                val token = _token.value ?: return@launch
-                val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                val token = _token.value ?: run {
+                    Log.w(
+                        "ImageUpload",
+                        "Token de autenticação não encontrado. Abortando upload de imagem."
+                    )
+                    return@launch
+                }
 
-                val imageProfile = userRequests.uploadImage(
+                val requestFile = tempFile.asRequestBody(type.toMediaTypeOrNull())
+                val body = MultipartBody.Part.createFormData("file", tempFile.name, requestFile)
+
+                val uploadedImageResponse = userRequests.uploadImage(
                     file = body,
                     token = token,
-                    uuid = uuid
-                )?.copy(src = file.readBytes())
+                    slot = slot + 1
+                )
 
-                val profileImages = if (uuid == null) {
-                    _myUser.value?.profileImages.orEmpty() + imageProfile
+                if (uploadedImageResponse == null) {
+                    Log.e("ImageUpload", "Resposta da API de upload de imagem é nula.")
+                    return@launch
+                }
+
+                val imageProfileWithBytes = uploadedImageResponse
+                    .copy(
+                        src = tempFile.readBytes(),
+                        userUuid = _myUser.value?.uuid,
+                        user = _myUser.value
+                    )
+
+                val updatedProfileImages = if (uuid == null) {
+                    _myUser.value?.profileImages.orEmpty() + imageProfileWithBytes
                 } else {
                     _myUser.value?.profileImages.orEmpty().map {
-                        if (it.uuid == uuid) imageProfile else it
+                        if (it.uuid == uuid) imageProfileWithBytes else it
                     }
                 }
-                _myUser.value = profileImages.filterNotNull().let {
-                    _myUser.value?.copy(
-                        profileImages = it
-                    )
+
+                _myUser.value =
+                    _myUser.value?.copy(profileImages = updatedProfileImages.filterNotNull())
+
+                realm.write {
+                    val existingRealmImg =
+                        query<ImageProfileRealm>("uuid == $0", imageProfileWithBytes.uuid).find()
+                            .firstOrNull()
+                    val userRealm =
+                        query<UserRealm>("uuid == $0", imageProfileWithBytes.userUuid).find()
+                            .firstOrNull()
+
+                    if (existingRealmImg == null) {
+                        imageProfileWithBytes.toRealm()?.let {
+                            userRealm?.profileImages?.add(it)
+                        }
+                    }
                 }
+                Log.d("ImageUpload", "Imagem salva no Realm e estado local atualizado.")
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("ImageUpload", "Erro ao salvar imagem de perfil: ${e.message}", e)
             } finally {
-                file.delete()
-                if (!file.exists()) {
-                    println("Arquivo temporário deletado: ${file.absolutePath}")
+                if (tempFile.exists()) {
+                    if (tempFile.delete()) {
+                        Log.d(
+                            "ImageUpload",
+                            "Arquivo temporário deletado: ${tempFile.absolutePath}"
+                        )
+                    } else {
+                        Log.e(
+                            "ImageUpload",
+                            "Falha ao deletar arquivo temporário: ${tempFile.absolutePath}"
+                        )
+                    }
                 }
             }
         }
@@ -293,7 +326,7 @@ class UserViewModel : ViewModel() {
             if (imageProfile == null) return
             val profileRealm = format.toImageProfileImage(imageProfile)
 
-            realm.writeBlocking {
+            realm?.writeBlocking {
                 val imageGet =
                     this.query<ImageProfileRealm>("uuid == $0", profileRealm?.uuid).first().find()
 
@@ -314,16 +347,48 @@ class UserViewModel : ViewModel() {
     }
 
     /**
-     * Obtém um usuário do Realm pelo UUID.
-     * @param uuid O UUID do usuário a ser obtido.
-     * @return O objeto User correspondente ou null se não for encontrado ou ocorrer um erro.
+     * Salva ou atualiza uma imagem de perfil no Realm.
+     * @param imageMessage O objeto ImageProfile a ser salvo/atualizado.
+     * @param src Os bytes da imagem.
      */
-    fun getUser(uuid: String): User? {
-        return try {
-            users.value.find { it.uuid == uuid }
-                ?: realm.query<UserRealm>("uuid == $0", uuid).find().firstOrNull()?.let {
-                    formatR.fromUserRealm(it)
+    fun saveMessageImage(imageMessage: ImageMessage?, src: ByteArray) {
+        try {
+            if (imageMessage == null) return
+            val profileRealm = format.toImageMessage(imageMessage)
+
+            realm.writeBlocking {
+                val imageGet =
+                    this.query<ImageProfileRealm>("uuid == $0", profileRealm?.uuid).first().find()
+
+                if (imageGet != null) {
+                    imageGet.src = src
+                } else {
+                    copyToRealm(
+                        profileRealm, updatePolicy = UpdatePolicy.ALL
+                    )
                 }
+            }
+        } catch (error: Exception) {
+            error.printStackTrace()
+            Log.e("Error", error.message.toString())
+        }
+    }
+
+    suspend fun getUser(uuid: String, requestOn: Boolean = false): User? {
+        return try {
+            if (!requestOn) {
+                var user = users.value.find { it.uuid == uuid }
+                    ?: realm.query<UserRealm>("uuid == $0", uuid).find().firstOrNull()?.let {
+                        formatR.fromUserRealm(it)
+                    }
+                if (user == null) {
+                    user = userRequests.getUser(uuid, _token.value)
+                }
+                user
+            } else {
+                val user = userRequests.getUser(uuid, _token.value)
+                user
+            }
         } catch (error: Exception) {
             error.printStackTrace()
             null
@@ -355,9 +420,9 @@ class UserViewModel : ViewModel() {
      *
      * @param uri O URI da imagem selecionada.
      */
-    fun uploadProfileImage(uri: Uri, uuid: String? = null) {
+    fun uploadProfileImage(uri: Uri, uuid: String? = null, currentImageIndex: Int = 0) {
         viewModelScope.launch {
-            saveProfileImageApi(uri, uuid)
+            saveProfileImageApi(uri, uuid, currentImageIndex)
         }
     }
 
@@ -374,52 +439,38 @@ class UserViewModel : ViewModel() {
 
                 val response = apiUserService.update(
                     token,
-                    UpdateUser(user.name, age = user.age, gender = user.gender, location = location)
+                    UpdateUser(
+                        user.name,
+                        birthDate = user.birthDate,
+                        gender = user.gender,
+                        location = location
+                    )
                 )
 
                 if (response.isSuccessful) {
                     response.body()?.let { updatedUserDto ->
-                        _myUser.value = _myUser.value?.copy(
-                            gender = updatedUserDto.gender,
-                            age = updatedUserDto.age,
-                            name = updatedUserDto.name
-                        )
-                        realm.writeBlocking {
-                            val userRealm =
-                                query<UserRealm>("uuid == $0", updatedUserDto.uuid).first().find()
-
-                            userRealm?.name = updatedUserDto.name
-                            updatedUserDto.gender?.name?.let { userRealm?.gender = it }
-                            userRealm?.age = updatedUserDto.age
-                        }
-
+                        _myUser.value = updateUserInRealm(realm, user.uuid, updatedUserDto)
                     } ?: run {
-                        showToast("Sucesso, mas resposta da API vazia.")
+                        showToast("Sucesso, mas resposta da API vazia.", context)
                     }
-                    showToast("Sucesso!")
+                    showToast("Sucesso!", context)
                 } else {
                     response.errorBody()?.string()?.let { errorMessage ->
-                        showToast("Erro ao atualizar usuário: $errorMessage")
+                        println(errorMessage)
+                        showToast("Erro ao atualizar usuário: $errorMessage", context)
                     } ?: run {
-                        showToast("Erro desconhecido ao atualizar usuário. Código: ${response.code()}")
+                        Log.e("Error de Localização", "${response.code()}")
+                        showToast("Erro desconhecido ao atualizar usuário. Código: ${response.code()}", context)
                     }
                 }
-
             } catch (e: Exception) {
                 e.printStackTrace()
                 e.message?.let {
-                    showToast("Ocorreu um erro: $it")
-                } ?: showToast("Ocorreu um erro inesperado ao atualizar o usuário.")
+                    Log.e("Error de Localização", "${it}")
+                    showToast("Ocorreu um erro: $it", context)
+                } ?: showToast("Ocorreu um erro inesperado ao atualizar o usuário.", context)
             } finally {
                 onFinally()
-            }
-        }
-    }
-
-    private fun showToast(message: String) {
-        context?.let { ctx ->
-            Handler(Looper.getMainLooper()).post {
-                Toast.makeText(ctx, message, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -444,7 +495,7 @@ class UserViewModel : ViewModel() {
     fun insertLocation(pair: Pair<Double, Double>) {
         val currentUser = _myUser.value
 
-        if (currentUser == null || currentUser.uuid.isNullOrEmpty()) {
+        if (currentUser == null || currentUser.uuid.isEmpty()) {
             Log.e(
                 "LocationUpdate",
                 "Usuário atual inválido ou sem UUID. Não é possível atualizar a localização."
@@ -471,12 +522,9 @@ class UserViewModel : ViewModel() {
                 longitude = pair.second,
                 onAddressFound = { city, state, country ->
                     realm.writeBlocking {
-                        // Busca a LocationRealm gerenciada dentro da transação
-                        var locationToPersist: LocationRealm? =
-                            this.query<LocationRealm>("userId == $0", userId).first().find()
+                        var locationToPersist = this.query<LocationRealm>("userId == $0", userId).first().find()
 
-                        val userRealmToUpdate: UserRealm? =
-                            this.query<UserRealm>("uuid == $0", userId).first().find()
+                        val userRealmToUpdate = this.query<UserRealm>("uuid == $0", userId).first().find()
 
                         if (userRealmToUpdate == null) {
                             Log.e(
@@ -505,17 +553,14 @@ class UserViewModel : ViewModel() {
                         val managedLocationRealm = copyToRealm(locationToPersist, UpdatePolicy.ALL)
 
                         userRealmToUpdate.location = managedLocationRealm
-                        userRealmToUpdate.locationId =
-                            managedLocationRealm.uuid // Atualiza também o ID de referência
 
                         currentUser.let { userDomain ->
                             val updatedLocationDomain = Location(
-                                uuid = managedLocationRealm.uuid, // Use o UUID do Realm
+                                uuid = managedLocationRealm.uuid,
                                 latitude = pair.first.toString(),
                                 longitude = pair.second.toString(),
                                 city = city,
-                                state = State.values()
-                                    .find { it.name == state }, // Mapeie para o enum State
+                                state = state,
                                 userId = userId,
                                 createdAt = managedLocationRealm.createdAt,
                                 updatedAt = managedLocationRealm.updatedAt
@@ -568,16 +613,17 @@ class UserViewModel : ViewModel() {
             return if (response.isSuccessful) response.body() ?: emptyList()
             else {
                 println(response.errorBody()?.string())
-                showToast("Error ao procurar")
+                showToast("Error ao procurar", context)
                 emptyList()
             }
 
         } catch (error: Exception) {
-            showToast("Error ao procurar")
+            showToast("Error ao procurar", context)
             error.printStackTrace()
             emptyList()
         }
     }
+
     /**
      * Sincroniza blocos de dados entre a API remota e o banco de dados local Realm.
      *
@@ -639,7 +685,9 @@ class UserViewModel : ViewModel() {
                 } else {
                     Log.e(
                         "BlocksGet",
-                        "Erro na busca de blocos da API: ${response.code()} - ${response.errorBody()?.string()}. Carregando do cache local."
+                        "Erro na busca de blocos da API: ${response.code()} - ${
+                            response.errorBody()?.string()
+                        }. Carregando do cache local."
                     )
                     _blocks.value = localBlocks.map { formatR.fromBlockreal(it) }
                 }

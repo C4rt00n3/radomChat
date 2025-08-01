@@ -4,26 +4,37 @@ import android.util.Log
 import com.example.meettalk.data.local.model.RealmClass.BlockRealm
 import com.example.meettalk.data.local.model.RealmClass.ChatParticipantRealm
 import com.example.meettalk.data.local.model.RealmClass.ChatRealm
+import com.example.meettalk.data.local.model.RealmClass.ImageMessageRealm
 import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
 import com.example.meettalk.data.local.model.RealmClass.LocationRealm
 import com.example.meettalk.data.local.model.RealmClass.MessageRealm
 import com.example.meettalk.data.local.model.RealmClass.PreferenceRealm
+import com.example.meettalk.data.local.model.RealmClass.PrivacyUserRealm
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.data.local.model.body.enums.Gender
 import com.example.meettalk.data.local.model.body.enums.MessageType
-import com.example.meettalk.data.local.model.body.enums.State
 import com.example.meettalk.data.local.model.entities.Block
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.ChatParticipant
+import com.example.meettalk.data.local.model.entities.ImageMessage
 import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.data.local.model.entities.Location
 import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.Preference
+import com.example.meettalk.data.local.model.entities.PrivacyUser
 import com.example.meettalk.data.local.model.entities.User
 import io.realm.kotlin.ext.realmListOf
+import okhttp3.internal.format
 import java.util.UUID
 
 class FormatRealm {
+
+    fun toImageMessage(imageMessage: ImageMessage) = ImageMessageRealm().apply {
+        uuid = imageMessage.uuid
+        src = imageMessage.src
+        user = imageMessage.user?.toRealm()
+        message = imageMessage.message?.toRealm()
+    }
 
     fun toMessageRealm(message: Message?): MessageRealm? {
         if (message == null) return null
@@ -39,6 +50,7 @@ class FormatRealm {
             isRead = message.isRead
             replyToId = message.replyToId
             isUpdate = message.isUpdate
+            ImageMessage = message.ImageMessage?.let { toImageMessage(it) }
             updateAt = message.updateAt
             countUpdate = message.countUpdate
             isSend = message.isSend
@@ -59,16 +71,17 @@ class FormatRealm {
             uuid = user.uuid
             name = user.name
             gender = user.gender?.name ?: Gender.M.name
-            age = user.age
+            birthDate = user.birthDate
             location = user.location?.let { toLocation(it) }
-            locationId = user.locationId
             profileImages = realmListOf(
                 *user.profileImages.orEmpty()
                     .mapNotNull { toImageProfileImage(it) }
                     .toTypedArray()
             )
+            updateAt = user.updateAt
+            createAt = user.createAt
             preference = user.preference?.let { toPreference(it) }
-            preferenceUuid = user.preferenceUuid
+            privacyUser = user.privacyUser?.let {toPrivacyUser(it)}
         }
     }
 
@@ -78,7 +91,7 @@ class FormatRealm {
             uuid = profileImage.uuid
             userUuid = profileImage.userUuid
             src = profileImage.src
-            isPrimary = profileImage.isPrimary
+            slot = profileImage.slot
         }
     }
 
@@ -87,7 +100,7 @@ class FormatRealm {
 
         return try {
             ChatRealm().apply {
-                uuid = chat.uuid.ifEmpty { UUID.randomUUID().toString() }
+                uuid = chat.uuid
                 createdAt = chat.createdAt
                 lastMessageDate = chat.lastMessageDate.orEmpty()
                 fav = chat.fav
@@ -109,6 +122,13 @@ class FormatRealm {
         }
     }
 
+    fun toPrivacyUser(privacyUser: PrivacyUser) = PrivacyUserRealm().apply {
+        uuid = privacyUser.uuid
+        noMarkRead = privacyUser.noMarkRead
+        talkBreak = privacyUser.talkBreak
+        imageBreak = privacyUser.imageBreak
+    }
+
     fun toPreference(preferenceRealm: Preference): PreferenceRealm {
         return PreferenceRealm().apply {
             uuid = preferenceRealm.uuid
@@ -122,7 +142,7 @@ class FormatRealm {
             uuid = location.uuid
             latitude = location.latitude
             longitude = location.longitude
-            state = location.state?.name
+            state = location.state
             city = location.city
             createdAt = location.createdAt
             updatedAt = location.updatedAt

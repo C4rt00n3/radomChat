@@ -60,19 +60,19 @@ private val SCREEN_PADDING = 20.dp
  * Ele busca os dados do usuário a partir de um `ChatViewModel` e permite interações de clique
  * em cada slot de imagem.
  *
- * @param userViewModel O ViewModel que fornece os dados do usuário, incluindo as imagens de perfil.
+ * @param viewModel O ViewModel que fornece os dados do usuário, incluindo as imagens de perfil.
  * @param onImageClick Um callback que é invocado quando uma imagem na grade é clicada.
  * Recebe o rótulo (ex: "1", "2") da imagem clicada.
  */
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun ProfileImageGrid(
-    userViewModel: UserViewModel,
-    token: String,
+    viewModel: UserViewModel,
+    authToken: String,
     onImageClick: (Int) -> Unit = {},
 ) {
     val baseUrl = stringResource(R.string.baseUrl)
-    val user by userViewModel.myUser.collectAsState(initial = null)
+    val user by viewModel.myUser.collectAsState(initial = null)
 
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val totalSpacing = GRID_SPACING * (GRID_COLUMNS - 1)
@@ -99,7 +99,7 @@ fun ProfileImageGrid(
         ) {
             ProfileImageBox(
                 label = "1",
-                token = token,
+                token = authToken,
                 imageUrl = imageUrls.getOrElse(0) { "" },
                 imageProfile = user?.profileImages?.getOrNull(0),
                 modifier = Modifier
@@ -114,7 +114,7 @@ fun ProfileImageGrid(
             ) {
                 ProfileImageBox(
                     label = "2",
-                    token = token,
+                    token = authToken,
                     imageUrl = imageUrls.getOrElse(1) { "" },
                     imageProfile = user?.profileImages?.getOrNull(1),
                     modifier = Modifier.size(itemSize),
@@ -122,7 +122,7 @@ fun ProfileImageGrid(
                 )
                 ProfileImageBox(
                     label = "3",
-                    token = token,
+                    token = authToken,
                     imageUrl = imageUrls.getOrElse(2) { "" },
                     imageProfile = user?.profileImages?.getOrNull(2),
                     modifier = Modifier.size(itemSize),
@@ -138,7 +138,7 @@ fun ProfileImageGrid(
             (3..5).forEach { index ->
                 ProfileImageBox(
                     label = (index).toString(),
-                    token = token,
+                    token = authToken,
                     imageProfile = user?.profileImages?.getOrNull(index),
                     imageUrl = imageUrls.getOrElse(index) { "" },
                     modifier = Modifier.size(itemSize),

@@ -3,14 +3,20 @@ package com.example.meettalk.data.remote
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.example.meettalk.data.local.model.body.BodyUpdatesUsers
 import com.example.meettalk.data.local.model.body.CreateMessage
 import com.example.meettalk.data.local.model.body.DeleteMessageBody
 import com.example.meettalk.data.local.model.body.UpdateMessage
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.Message
+import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.utils.FormatClass
 import com.example.meettalk.utils.FormatRealm
+import com.google.gson.Gson
 import io.realm.kotlin.Realm
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -69,12 +75,21 @@ class ChatRequests(private val url: String, private val realm: Realm) {
     suspend fun create(
         token: String,
         data: CreateMessage,
+        file: MultipartBody.Part? = null,
         finally: () -> Unit = {},
         error: (Exception) -> Unit = {},
         onSuccess: (Message) -> Unit = {}
     ): Message? {
         return try {
-            val response = apiServiceChat.create(token, data)
+            val response = apiServiceChat.create(
+                token = token,
+                text = data.text.toRequestBody("text/plain".toMediaTypeOrNull()),
+                receiverId = data.receiverId.toRequestBody("text/plain".toMediaTypeOrNull()),
+                type = data.type.toString().toRequestBody("text/plain".toMediaTypeOrNull()),
+                replyToId = data.replyToId?.toRequestBody("text/plain".toMediaTypeOrNull()),
+                file = file
+            )
+
             if (response.isSuccessful) {
                 val newMessage = response.body()
                 if (newMessage != null)
@@ -208,5 +223,4 @@ class ChatRequests(private val url: String, private val realm: Realm) {
             null
         }
     }
-
 }

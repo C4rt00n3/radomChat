@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">MeetTalk</string>
-    <string name="baseUrl">https://c8dd58c961a8.ngrok-free.app</string>
+    <string name="baseUrl">https://d24f9fee13b2.ngrok-free.app</string>
     <string name="vis_o_geral">Visão geral</string>
     <string name="desbloquear">Desbloquear</string>
     <string name="bloquear">Bloquear</string>
@@ -35,4 +35,95 @@
     <string name="user_profile_image_description">Imagem de perfil do usuário</string>
     <string name="unblock_user_icon_description">Desbloquear usuário</string>
     <string name="open_options_menu_description">Abrir menu de opções</string>
+
+    <string name="secao_detalhes_do_perfil">Detalhes do Perfil</string>
+
+    <string name="apelido_do_usuario">Apelido</string>
+    <string name="carregando_dados">Carregando dados...</string>
+    <string name="sexo_do_usuario">Sexo</string>
+    <string name="masculino">Masculino</string>
+    <string name="feminino">Feminino</string>
+    <string name="nao_informado">Não Informado</string>
+    <string name="idade_do_usuario">Idade</string>
+    <string name="indisponivel">Indisponível</string>
+
+    <string name="titulo_editar_perfil">Editar Perfil</string>
+    <string name="fechar_edicao">Fechar Edição</string>
+    <string name="label_nome">Nome</string>
+    <string name="label_idade">Idade</string>
+    <string name="label_genero">Gênero</string>
+    <string name="botao_cancelar">Cancelar</string>
+    <string name="botao_salvar">Salvar</string>
+    <string name="mensagem_preencha_campos">Preencha todos os campos corretamente.</string>
+
+    <string name="icone_informacao">Ícone de Informação</string>
+    <string name="titulo_edite_perfil">Edite Seu Perfil</string>
+    <string name="texto_edite_perfil_descricao">Edite informações do seu perfil. Personalize como quiser, fique à vontade.</string>
+    <string name="botao_fechar">Fechar</string>
+
+    <string name="content_description_voltar">Botão Voltar</string>
+    <string name="mensagem_menu_em_breve">Funcionalidade de menu em breve!</string>
+    <string name="content_description_menu">Menu de Opções</string>
+    <string name="content_description_editar_perfil">Botão Editar Perfil</string>
+
+    <string name="erro_carregar_perfil">Erro ao carregar perfil: %1$s</string>
+    <string name="mensagem_selecao_midia_indisponivel">Seleção de mídia avançada não disponível nesta versão do Android.</string>
+    <string name="mensagem_perfil_atualizado_sucesso">Perfil atualizado com sucesso!</string>
+
+    <string name="content_description_fundo_borrado">Fundo borrado da imagem de perfil</string>
+    <string name="content_description_imagem_perfil_usuario">Imagem de perfil do usuário</string>
+    <string name="genero_format">Gênero: %1$s</string>
+    <string name="idade_format">Idade: %1$s anos</string>
+
+    <string name="imagem_decorativa_login">Imagem decorativa de fundo da tela de login</string>
+    <string name="titulo_login">Login</string>
+    <string name="label_email">Email</string>
+    <string name="placeholder_email">Digite seu email</string>
+    <string name="erro_email_invalido">Email inválido</string>
+    <string name="label_senha">Senha</string>
+    <string name="placeholder_senha">Digite sua senha</string>
+    <string name="erro_senha_vazia">Senha não pode ser vazia</string>
+    <string name="botao_login">Login</string>
+    <string name="texto_ou_continuar_com">Ou continue com</string>
+    <string name="botao_google">Google</string>
+    <string name="content_description_login_google">Login com Google</string>
+    <string name="botao_facebook">Facebook</string>
+    <string name="content_description_login_facebook">Login com Facebook</string>
+    <string name="texto_nao_tem_conta">Não tem conta?</string>
+    <string name="texto_criar_agora">Crie agora</string>
+    <string name="voltar">Voltar</string>
+    <string name="idade">Idade: %1$s</string>
+    <string name="aguarde">Aguarde...</string>
+    <string name="menu">Menu</string>
+    <string name="abrir_emojis">Abrir emojis</string>
+    <string name="anexar_arquivo">Anexar arquivo</string>
+    <string name="background_image">Background image</string>
+
+    <string name="content_description_voltar_tela">Voltar para a tela anterior</string>
+    <string name="content_description_imagem_mensagem_usuario">Imagem enviada por um usuário</string>
+    <string name="editar_perfil">Editar perfil</string>
+
+    <string name="content_description_menu_opcoes">Abrir menu de opções</string>
+    <string name="content_description_iniciar_chat_aleatorio">Iniciar um chat com usuário aleatório</string>
+    <string name="carregando_mais_usuarios">Carregando mais usuários...</string>
+    <string name="default_image_placeholder">Imagem padrão</string>
+
+    <string name="content_description_user_profile_image">Imagem de perfil do usuário</string>
+    <string name="search_chat_placeholder">Pesquisar chat...</string>
+    <string name="content_description_search_icon">Ícone de pesquisa</string>
+    <string name="content_description_clear_search">Limpar pesquisa</string>
+    <string name="content_description_start_random_chat">Iniciar um chat com usuário aleatório</string>
+    <string name="unknown_user">Usuário desconhecido</string>
+    <string name="content_description_favorite_chat">Chat favorito</string>
+    <string name="message_read">Mensagem visualizada</string>
+    <string name="message_not_read">Mensagem não visualizada</string>
+    <string name="no_images_available">Não há imagens disponíveis para este perfil.</string>
+    <string name="permission_denied_location">Permissão de localização negada. Algumas funcionalidades podem ser limitadas.</string>
+    <string name="no_random_user_found">Nenhum usuário aleatório encontrado no momento. Tente novamente mais tarde.</string>
+    <string name="carregando_mais_chats">Carregando mais chats...</string>
+    <string name="checkmarkdoneoutline_content_description">Ícone de mensagem lida/não lida</string>
+
+    <string name="content_description_open_options_menu">Abrir menu de opções</string>
+    <string name="content_description_collapse_options">Colapsar opções</string>
+    <string name="content_description_expand_options">Expandir opções</string>
 </resources>

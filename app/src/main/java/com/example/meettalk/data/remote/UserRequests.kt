@@ -3,7 +3,6 @@ package com.example.meettalk.data.remote
 import android.util.Log
 import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.data.local.model.entities.User
-import com.example.meettalk.utils.FormatRealm
 import io.realm.kotlin.Realm
 import okhttp3.MultipartBody
 import retrofit2.Retrofit
@@ -17,10 +16,10 @@ class UserRequests(private val url: String, private val realm: Realm) {
     suspend fun uploadImage(
         file: MultipartBody.Part,
         token: String,
-        uuid: String? = null
+        slot: Int = 0
     ): ImageProfile? {
         return try {
-            val response =  if (uuid == null) apiServiceChat.uploadImage(file, token) else apiServiceChat.updateImage(file, token, uuid)
+            val response = apiServiceChat.uploadImage(file, slot, token)
             if(response.isSuccessful)
                 response.body()
             else {

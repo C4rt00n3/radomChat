@@ -19,6 +19,7 @@ import com.example.meettalk.data.local.model.RealmClass.ImageProfileRealm
 import com.example.meettalk.data.local.model.RealmClass.LocationRealm
 import com.example.meettalk.data.local.model.RealmClass.MessageRealm
 import com.example.meettalk.data.local.model.RealmClass.PreferenceRealm
+import com.example.meettalk.data.local.model.RealmClass.PrivacyUserRealm
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.data.remote.ChatRequests
 import com.example.meettalk.presentation.viewmodel.ChatViewModel
@@ -45,7 +46,8 @@ class MainActivity : ComponentActivity() {
                 ChatParticipantRealm::class,
                 ImageMessageRealm::class,
                 MessageRealm::class,
-                PreferenceRealm::class
+                PreferenceRealm::class,
+                PrivacyUserRealm::class
             )
         )
             .schemaVersion(1)

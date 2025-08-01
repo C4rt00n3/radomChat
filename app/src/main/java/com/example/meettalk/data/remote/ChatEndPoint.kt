@@ -1,17 +1,25 @@
 package com.example.meettalk.data.remote
 
+import com.example.meettalk.data.local.model.body.BodyUpdatesUsers
 import com.example.meettalk.data.local.model.body.CreateMessage
 import com.example.meettalk.data.local.model.body.DeleteMessageBody
 import com.example.meettalk.data.local.model.body.UpdateMessage
+import com.example.meettalk.data.local.model.body.enums.MessageType
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.Message
+import com.example.meettalk.data.local.model.entities.User
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.Header
+import retrofit2.http.Headers
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.UUID
@@ -36,10 +44,15 @@ interface ChatEndPoint {
         @Query("safe") safe: Boolean = false // Ajuste aqui para definir o nome e o tipo do parâmetro de query
     ): Response<Unit>
 
+    @Multipart
     @POST("message")
     suspend fun create(
         @Header("Authorization") token: String,
-        @Body body: CreateMessage
+        @Part("text") text: RequestBody,
+        @Part("receiverId") receiverId: RequestBody,
+        @Part("type") type: RequestBody,
+        @Part("replyToId") replyToId: RequestBody? = null,
+        @Part file: MultipartBody.Part? = null
     ): Response<Message>
 
     @PATCH("message/{uuid}")

@@ -38,30 +38,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.composables.core.Icon
 import com.example.meettalk.R
 import com.example.meettalk.data.local.model.body.enums.Gender
 import com.example.meettalk.data.local.model.body.enums.MessageType
+import com.example.meettalk.data.local.model.entities.ImageMessage
 import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.data.local.model.entities.Message
+import com.example.meettalk.data.local.model.entities.Preference
 import com.example.meettalk.data.local.model.entities.User
+import com.example.meettalk.presentation.components.images.AsynchronousImageWithErrorPreventionMessage
+import com.example.meettalk.presentation.viewmodel.UserViewModel
 import com.example.meettalk.ui.theme.BackgroundBlack
 import com.example.meettalk.ui.theme.BlueOther
 import com.example.meettalk.ui.theme.MeetTalkTheme
 import com.example.meettalk.ui.theme.MessageColor
 import com.example.meettalk.utils.formatarDataAmigavel
 import kotlinx.coroutines.delay
+import java.util.UUID
 
 val messageExample = Message(
     uuid = "5319357e-5eb4-4bba-bf45-fc25048f107a",
-    text = "Lorem ipsum dolor sit amet . Os operadores gráficos e tipográficos sabem disso bem, na realidade, todas as profissões que lidam com o universo da comunicação têm um relacionamento estável com essas palavras, mas o que é? Lorem ipsum é um texto fofo sem qualquer sentido.",
+    text = "Descrição",
+    // "Lorem ipsum dolor sit amet . Os operadores gráficos e tipográficos sabem disso bem, na realidade, todas as profissões que lidam com o universo da comunicação têm um relacionamento estável com essas palavras, mas o que é? Lorem ipsum é um texto fofo sem qualquer sentido.",
     type = MessageType.TEXT,
     url = null,
     chatId = "ecfae7f0-a196-48a1-8036-712dcaf822e3",
@@ -70,6 +81,7 @@ val messageExample = Message(
     receiverId = "3beba2e2-3fc8-4acc-b7c0-51c78d6ffae3",
     isRead = true,
     replyToId = null,
+    ImageMessage = ImageMessage(uuid = UUID.randomUUID().toString(), src = null, user = null),
     isUpdate = false,
     updateAt = "2025-06-18T15:22:11.598Z",
     countUpdate = 0,
@@ -97,7 +109,12 @@ val user = User(
     uuid = "3beba2e2-3fc8-4acc-b7c0-51c78d6ffae3",
     name = "Sandro Cato",
     gender = Gender.M,
-    age = 28,
+    birthDate = "28",
+    preference = Preference(
+        uuid = UUID.randomUUID().toString(),
+        gender = Gender.F,
+        maxAge = 25
+    ),
     profileImages = listOf(
         ImageProfile("028752e1-ffb4-4459-ba32-b234183f43b8"),
         ImageProfile("3c9c6d6f-4a85-401e-bcc2-e661a8713592"),
@@ -110,7 +127,7 @@ fun Interrogation(message: Message?, isMi: Boolean) {
     if (isMi && message?.isSend == false) {
         var showErrorIcon by remember { mutableStateOf(false) }
 
-        LaunchedEffect (message.uuid) {
+        LaunchedEffect(message.uuid) {
             delay(7000L)
             showErrorIcon = true
         }
@@ -164,6 +181,9 @@ fun MessageBubble(
     reply: Message? = message1,
     isMi: Boolean = true,
     isSelected: Boolean = false,
+    token: String,
+    userViewModel: UserViewModel = viewModel(),
+    navController: NavController = rememberNavController(),
     clickInReply: (Message) -> Unit = { _ -> },
     onTap: (Message) -> Unit = {},
     onLongPress: (Message) -> Unit = {},
@@ -266,6 +286,26 @@ fun MessageBubble(
                 Column(
                     verticalArrangement = Arrangement.Bottom
                 ) {
+                    if (message?.ImageMessage != null)
+                        message.chatId?.let {
+                            AsynchronousImageWithErrorPreventionMessage(
+                                token = token,
+                                userViewModel = userViewModel,
+                                contentScale = ContentScale.Crop,
+                                chatUuid = it,
+                                imageMessage = message.ImageMessage,
+                                contentDescription = "Imagem enviada pelo usuario",
+                                modifier = Modifier
+                                    .padding(bottom = 8.dp)
+                                    .clickable {
+                                        navController.navigate("image/view/${message.ImageMessage.uuid}/${message.chatId}")
+                                    }
+                                    .widthIn(min = screenWidth * 0.3f, max = screenWidth * 0.8f)
+                                    .height(200.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+                        }
+
                     Text(
                         text = message?.text ?: "Aguarde...",
                         color = Color.White,
@@ -346,7 +386,7 @@ fun MessageBubblePreview() {
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
         ) {
-            MessageBubble()
+            MessageBubble(token = "")
         }
     }
 }

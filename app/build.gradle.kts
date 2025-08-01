@@ -96,4 +96,8 @@ dependencies {
     implementation (libs.accompanist.permissions)
     implementation(libs.play.services.location)
 
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
 }

@@ -8,14 +8,19 @@ data class ImageProfile(
     val src: ByteArray? = null,
     val userUuid: String? = null,
     val user: User? = null,
-    val isPrimary: Boolean = false,
+    val createAt:String? = null,
+    val updateAt:  String? = null,
+    val slot: Int = 1
 ) {
     private fun toImageProfileImage(profileImage: ImageProfile?): ImageProfileRealm? {
         if (profileImage == null) return null
         return ImageProfileRealm().apply {
             uuid = profileImage.uuid
+            createAt = profileImage.createAt
+            updateAt = profileImage.updateAt
             userUuid = profileImage.userUuid
             src = profileImage.src
+            slot = profileImage.slot
         }
     }
 
@@ -44,6 +49,6 @@ data class ImageProfile(
         return result
     }
 
-    fun toRealm() = toImageProfileImage(this)
+    open fun toRealm() = toImageProfileImage(this)
 }
 

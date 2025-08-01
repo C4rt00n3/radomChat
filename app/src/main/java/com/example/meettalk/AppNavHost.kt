@@ -6,8 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -16,14 +14,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.meettalk.data.local.AppRoutes
+import com.example.meettalk.presentation.components.PaddingGlobal
 import com.example.meettalk.presentation.ui.AppSettingsScreen
+import com.example.meettalk.presentation.ui.ChatListScreen
 import com.example.meettalk.presentation.ui.ChatScreen
+import com.example.meettalk.presentation.ui.FullScreenImageViewer
 import com.example.meettalk.presentation.ui.Loading
-import com.example.meettalk.presentation.ui.Login
-import com.example.meettalk.presentation.ui.ScreenExplorer
-import com.example.meettalk.presentation.ui.ScreenListChats
+import com.example.meettalk.presentation.ui.LoginScreen
+import com.example.meettalk.presentation.ui.UserExplorerScreen
 import com.example.meettalk.presentation.ui.UserProfileScreen
-import com.example.meettalk.presentation.ui.UserProfileStoriesScreen
+import com.example.meettalk.presentation.ui.UserStoriesScreen
 import com.example.meettalk.presentation.viewmodel.UserViewModel
 import io.realm.kotlin.Realm
 
@@ -59,53 +59,64 @@ fun AppNavHost(
         userViewModel.build(context, realm)
     }
 
-    NavHost(
-        navController = navController, startDestination = AppRoutes.LOADING,
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-    ) {
-        composable(AppRoutes.EDIT_MY_PERFIL) {
-            UserProfileScreen(navController = navController)
-        }
-        composable(AppRoutes.LOGIN) {
-            Login { route -> navController.navigate(route) }
-        }
-        composable(AppRoutes.CHAT_LIST) {
-            ScreenListChats(
-                navController = navController, realm = realm,
-            )
-        }
-        composable(AppRoutes.CHAT_MESSAGES_PATTERN) { backStackEntry ->
-            val userUuid = backStackEntry.arguments?.getString("uuid") ?: ""
-            ChatScreen(
-                userUuid = userUuid,
-                navController = navController,
-                userViewModel = userViewModel,
-                realm = realm,
-            )
-        }
-        composable(AppRoutes.USER_PERFIL) { backStackEntry ->
-            val uuid = backStackEntry.arguments?.getString("uuid") ?: ""
-            UserProfileStoriesScreen(uuid = uuid, realm = realm, navController = navController)
-        }
+    PaddingGlobal {
+        NavHost(
+            navController = navController, startDestination = AppRoutes.LOADING,
+            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+        ) {
+            composable(AppRoutes.EDIT_MY_PERFIL) { backStackEntry ->
+                val show = (backStackEntry.arguments?.getString("show") ?: "false").toBoolean()
+                UserProfileScreen(
+                    navController = navController,
+                    viewModel = userViewModel,
+                    showWelcome = show,
+                    realm = realm
+                )
+            }
+            composable(AppRoutes.LOGIN) {
+                LoginScreen(realm, navController = navController)
+            }
+            composable(AppRoutes.CHAT_LIST) {
+                ChatListScreen(
+                    navController = navController, realm = realm,
+                )
+            }
+            composable(AppRoutes.CHAT_MESSAGES_PATTERN) { backStackEntry ->
+                val userUuid = backStackEntry.arguments?.getString("uuid") ?: ""
+                ChatScreen(
+                    userUuid = userUuid,
+                    navController = navController,
+                    userViewModel = userViewModel,
+                    realm = realm,
+                )
+            }
+            composable(AppRoutes.IMAGE_VIEW) { backStackEntry ->
+                val uuid = backStackEntry.arguments?.getString("uuid") ?: ""
+                val chatUuid = backStackEntry.arguments?.getString("chat_uuid") ?: ""
 
-        composable(AppRoutes.LOADING) {
-            Loading(realm, navController = navController)
-        }
-
-        composable(AppRoutes.EXPLORER_USERS) {
-            ScreenExplorer(
-                realm = realm,
-                navController = navController,
-                userViewModel = userViewModel,
-            )
-        }
-
-        composable(AppRoutes.OPTIONS_APP) {
-            AppSettingsScreen(
-                realm = realm,
-                userViewModel = userViewModel,
-                navController = navController
-            )
+                FullScreenImageViewer(uuid, chatUuid, realm, userViewModel, navController)
+            }
+            composable(AppRoutes.USER_PERFIL) { backStackEntry ->
+                val uuid = backStackEntry.arguments?.getString("uuid") ?: ""
+                UserStoriesScreen(userUuid = uuid, realm = realm, navController = navController)
+            }
+            composable(AppRoutes.LOADING) {
+                Loading(realm, navController = navController)
+            }
+            composable(AppRoutes.EXPLORER_USERS) {
+                UserExplorerScreen(
+                    realm = realm,
+                    navController = navController,
+                    userViewModel = userViewModel,
+                )
+            }
+            composable(AppRoutes.OPTIONS_APP) {
+                AppSettingsScreen(
+                    realm = realm,
+                    userViewModel = userViewModel,
+                    navController = navController
+                )
+            }
         }
     }
 }

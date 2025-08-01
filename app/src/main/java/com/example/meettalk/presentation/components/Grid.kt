@@ -21,31 +21,6 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun Grid() {
-    val items = (1..7).toList()
-
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        itemsIndexed((1..7).toList(), span = { index, _ ->
-            if (index == 6) GridItemSpan(2) else GridItemSpan(1)
-        }) { index, item ->
-            if (index == 6) {
-                HighlightItem(item)
-            } else {
-                GridItem(item)
-            }
-        }
-    }
-}
-
-@Composable
 fun GridItem(number: Int) {
     Card(
         modifier = Modifier

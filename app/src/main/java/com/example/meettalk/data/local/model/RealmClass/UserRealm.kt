@@ -16,8 +16,11 @@ class UserRealm : RealmObject {
     var uuid: String = ""
 
     var name: String = ""
-    var age: Int = 18
+    var birthDate: String = ""
     var gender: String = "M"
+    var updateAt: String? = null
+
+    var preference: PreferenceRealm? = null
 
     var chatParticipants: RealmList<ChatParticipantRealm> = realmListOf()
 
@@ -26,14 +29,13 @@ class UserRealm : RealmObject {
     var profileImages: RealmList<ImageProfileRealm> = realmListOf()
 
     var messageImages: RealmList<ImageMessageRealm> = realmListOf()
+    var createAt: String? = null
 
     var owner: Boolean = false
 
-    var preference: PreferenceRealm? = null
-    var preferenceUuid: String? = null
-
     var location: LocationRealm? = null
-    var locationId: String? = null
+
+    var privacyUser: PrivacyUserRealm? = null
 
     fun toClass() = format.fromUserRealm(this)
 }

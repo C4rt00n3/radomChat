@@ -45,9 +45,10 @@ interface UsersEndpoints {
     ): Response<User>
 
     @Multipart
-    @POST("image-profile")
+    @POST("image-profile/{slot}")
     suspend fun uploadImage(
         @Part file: MultipartBody.Part,
+        @Path("slot") slot: Int,
         @Header("Authorization") authHeader: String
     ): Response<ImageProfile>
 
