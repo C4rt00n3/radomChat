@@ -15,18 +15,18 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 data class User(
-    val uuid: String = java.util.UUID.randomUUID().toString(),
+    val uuid: String,
     val name: String,
     val birthDate: String,
     val preference: Preference,
-    val gender: Gender? = Gender.M,
+    val gender: String? = Gender.M.name,
     val chatParticipants: List<ChatParticipant> = emptyList(),
     val profileImages: List<ImageProfile> = emptyList(),
     val privacyUser: PrivacyUser? = null,
     val location: Location? = null,
     val updateAt: String? = null,
     var createAt: String? = null,
-) {
+) : Iterable<Any> {
     val age: Int
         @RequiresApi(Build.VERSION_CODES.O)
         get() {
@@ -79,7 +79,7 @@ data class User(
         return UserRealm().apply {
             uuid = user.uuid
             name = user.name
-            gender = user.gender?.name ?: Gender.M.name
+            gender = user.gender ?: Gender.M.name
             updateAt = user.updateAt
             createAt = user.createAt
             birthDate = user.birthDate // Mantenha a string original para o Realm
@@ -95,4 +95,7 @@ data class User(
     }
 
     fun toRealm() = toUserRealm(this)
+    override fun iterator(): Iterator<Any> {
+        TODO("Not yet implemented")
+    }
 }

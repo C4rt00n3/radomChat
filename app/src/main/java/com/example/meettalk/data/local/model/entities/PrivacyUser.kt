@@ -1,6 +1,5 @@
 package com.example.meettalk.data.local.model.entities
 
-import com.example.meettalk.utils.FormatClass
 import com.example.meettalk.utils.FormatRealm
 
 data class PrivacyUser(

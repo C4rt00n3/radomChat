@@ -45,12 +45,18 @@ fun ChatListContent(
         state = lazyListState
     ) {
         items(displayedChats, key = { it.uuid }) { chat ->
-            val lastMessage = chat.messages.lastOrNull()
+            // CORREÇÃO: Garante que 'messages' nunca seja nulo.
+            // Se chat.messages for nulo, 'messages' será uma lista vazia.
+            val messages = chat.messages ?: emptyList()
+
+            // Agora, 'messages.isEmpty()' e 'messages.lastOrNull()' são seguros para chamar,
+            // pois 'messages' nunca será nulo.
+            val lastMessage = if(messages.isEmpty()) null else messages.lastOrNull()
             val participantUser = chat.participants.find { it.userId != currentUserUuid }?.user
             val participantProfileImage = participantUser?.profileImages?.find { it.slot == 1 }
                 ?: participantUser?.profileImages?.firstOrNull()
 
-            val unreadMessageCount = chat.messages.count { !it.isRead && it.senderId != currentUserUuid }
+            val unreadMessageCount = messages.count { !it.isRead && it.senderId != currentUserUuid }
 
             ChatItem(
                 chat = chat,

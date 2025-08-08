@@ -39,6 +39,10 @@ class TokenManager(context: Context) {
         sharedPreferences.edit().putString("auth_token", "Bearer $token").apply()
     }
 
+    fun saveRefreshToken(token: String) {
+        sharedPreferences.edit().putString("refresh_token", "Bearer $token").apply()
+    }
+
     fun saveUser(user: User) {
         val json = gson.toJson(user)
         sharedPreferences.edit().putString("user", json).apply()
@@ -51,6 +55,10 @@ class TokenManager(context: Context) {
 
     fun getToken(): String? {
         return sharedPreferences.getString("auth_token", null)
+    }
+
+    fun getRefreshToken(): String? {
+        return sharedPreferences.getString("refresh_token", null)
     }
 
     fun clearToken() {

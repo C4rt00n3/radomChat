@@ -67,7 +67,7 @@ fun ProfileEditDialog(
 ) {
     var nameInput by remember { mutableStateOf(user.name) }
     var ageInput by remember { mutableIntStateOf(user.age) }
-    val genderOptions = Gender.entries.toTypedArray()
+    val genderOptions = arrayOf("M", "F", "O")
     val (selectedGenderOption, onGenderOptionSelected) = remember { mutableStateOf(user.gender) }
     val snackbarState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -149,7 +149,7 @@ fun ProfileEditDialog(
                                 selected = (genderOption == selectedGenderOption), onClick = null
                             )
                             Text(
-                                text = genderOption.name,
+                                text = genderOption,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(start = 16.dp)
                             )

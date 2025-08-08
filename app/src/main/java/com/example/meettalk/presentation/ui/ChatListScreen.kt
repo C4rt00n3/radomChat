@@ -91,7 +91,6 @@ fun ChatListScreen(
 ) {
     val context = LocalContext.current
     val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
@@ -103,7 +102,6 @@ fun ChatListScreen(
     var selectedFilterCategoryIndex by remember { mutableIntStateOf(ChatFilterCategory.ALL.index) }
     var isInitialLoaderVisible by remember { mutableStateOf(false) }
 
-    // Filtra e ordena a lista de chats com base na pesquisa e categoria selecionada
     val displayedChats =
         remember(searchQuery, selectedFilterCategoryIndex, allChats, currentUser?.uuid) {
             val filteredBySearch = if (searchQuery.isBlank()) {
@@ -117,7 +115,7 @@ fun ChatListScreen(
             }
 
             when (selectedFilterCategoryIndex) {
-                ChatFilterCategory.ALL.index -> filteredBySearch
+                ChatFilterCategory.ALL.index -> filteredBySearch.distinctBy { it.uuid }
                 ChatFilterCategory.UNREAD.index -> filteredBySearch.filter { chat ->
                     chat.messages.any { message ->
                         !message.isRead && message.senderId != currentUser?.uuid
@@ -133,16 +131,14 @@ fun ChatListScreen(
                 try {
                     Instant.parse(chat.lastMessageDate)
                 } catch (e: DateTimeParseException) {
-                    Instant.EPOCH // Retorna uma data de época em caso de erro de parsing
+                    Instant.EPOCH
                 }
             }
         }
 
     var isLoadingMoreChats by remember { mutableStateOf(false) }
-    var currentPage by remember { mutableIntStateOf(1) }
     val lazyListState = rememberLazyListState()
 
-    // Launcher para solicitar permissão de localização
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -150,7 +146,6 @@ fun ChatListScreen(
         val currentTime = System.currentTimeMillis()
 
         if (isGranted) {
-            // Verifica se a localização do usuário precisa ser atualizada (a cada 24h)
             currentUser?.location?.let { userLocation ->
                 if (currentTime - userLocation.updatedAt >= oneDayInMillis) {
                     getLastUserLocation(context, { userViewModel.insertLocation(it) }) {}
@@ -163,53 +158,17 @@ fun ChatListScreen(
         }
     }
 
-    // Efeitos de inicialização
     LaunchedEffect(Unit) {
         userViewModel.build(context, realm)
-        chatViewModel.build(context, realm)
-        isInitialLoaderVisible = false // Garante que o loader inicial esteja oculto ao iniciar
-    }
-
-    // Conecta ao socket e observa chats quando o token está disponível
-    LaunchedEffect(authToken) {
-        if (authToken.isNotBlank()) {
-            chatViewModel.connectSocket()
-            chatViewModel.observeChats()
+        chatViewModel.apply {
+            build(context, realm)
+            findChats()
         }
     }
 
-    // Carrega mais chats quando a página muda
-    LaunchedEffect(currentPage) {
-        if (currentPage > 0) {
-            isLoadingMoreChats = true
-            chatViewModel.findMany(currentPage)
-            isLoadingMoreChats = false
-        }
-    }
-
-    // Monitora o scroll para carregar mais chats
-    LaunchedEffect(lazyListState) {
-        snapshotFlow { lazyListState.firstVisibleItemIndex }
-            .map {
-                val lastVisibleItemIndex =
-                    lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                val totalItemsCount = lazyListState.layoutInfo.totalItemsCount
-                // Carrega mais se o usuário estiver a 5 itens do final e não houver carregamento ativo
-                totalItemsCount > 0 && (lastVisibleItemIndex >= totalItemsCount - 5) && !isLoadingMoreChats
-            }
-            .distinctUntilChanged()
-            .collect { shouldLoadMore ->
-                if (shouldLoadMore) {
-                    currentPage++
-                }
-            }
-    }
-
-    // Solicita permissão de localização na inicialização
     LaunchedEffect(locationPermissionState) {
         when {
             locationPermissionState.status.isGranted -> {
-                // Se a permissão já foi concedida, tenta obter a localização
                 currentUser?.location?.let { userLocation ->
                     val oneDayInMillis = TimeUnit.DAYS.toMillis(1)
                     val currentTime = System.currentTimeMillis()
@@ -222,11 +181,11 @@ fun ChatListScreen(
             }
 
             else -> {
-                // Se a permissão não foi concedida, solicita
                 requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }
+
     Scaffold(
         topBar = {
             ChatListTopBar(
@@ -238,7 +197,7 @@ fun ChatListScreen(
                 isSearchActive = isSearchActive,
                 onSearchActiveChange = { newActiveState ->
                     isSearchActive = newActiveState
-                    if (!newActiveState) searchQuery = "" // Limpa a pesquisa ao desativar
+                    if (!newActiveState) searchQuery = ""
                 }
             )
         },
@@ -272,14 +231,15 @@ fun ChatListScreen(
             ChatFilterSegmentedButtons(
                 onCategorySelected = { index, _ -> selectedFilterCategoryIndex = index }
             )
-            ChatListContent(
-                displayedChats = displayedChats,
-                currentUserUuid = currentUser?.uuid,
-                authToken = authToken,
-                lazyListState = lazyListState,
-                isLoadingMore = isLoadingMoreChats,
-                navController = navController
-            )
+            if (displayedChats.isNotEmpty())
+                ChatListContent(
+                    displayedChats = displayedChats,
+                    currentUserUuid = currentUser?.uuid,
+                    authToken = authToken,
+                    lazyListState = lazyListState,
+                    isLoadingMore = isLoadingMoreChats,
+                    navController = navController
+                )
         }
     }
 

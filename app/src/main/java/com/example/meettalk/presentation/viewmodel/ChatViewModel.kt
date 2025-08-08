@@ -23,13 +23,17 @@ import com.example.meettalk.data.local.model.entities.ContactImageProfileUpdated
 import com.example.meettalk.data.local.model.entities.ContactProfileUpdated
 import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.data.local.model.entities.Message
+import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.data.remote.ChatEndPoint
 import com.example.meettalk.data.remote.ChatRequests
+import com.example.meettalk.data.remote.UserRequests
 import com.example.meettalk.data.repository.SocketManager
+import com.example.meettalk.presentation.components.UiState
 import com.example.meettalk.utils.FormatClass
 import com.example.meettalk.utils.FormatRealm
 import com.example.meettalk.utils.TaskManager
 import com.example.meettalk.utils.TokenManager
+import com.example.meettalk.utils.getSubFromJwt
 import com.example.meettalk.utils.showToast
 import com.example.meettalk.utils.users.updateUserInRealm
 import com.google.gson.Gson
@@ -39,7 +43,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmListOf
 import io.socket.client.Socket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +57,9 @@ open class ChatViewModel() : ViewModel() {
 
     private val _chatsResult = MutableStateFlow<List<Chat>>(listOf())
     open val chatsResult: StateFlow<List<Chat>> = _chatsResult
+
+    private val _myUser = MutableStateFlow<User?>(null)
+    open val myUser: StateFlow<User?> = _myUser
 
     private lateinit var url: String
 
@@ -77,100 +83,76 @@ open class ChatViewModel() : ViewModel() {
 
     private lateinit var token: String
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun build(context: Context, realm: Realm? = null) {
-        val url = context.getText(R.string.baseUrl).toString()
-        if (realm == null) {
-            val config = RealmConfiguration.Builder(
-                schema = setOf(
-                    UserRealm::class,
-                    BlockRealm::class,
-                    ChatRealm::class,
-                    LocationRealm::class,
-                    ImageProfileRealm::class,
-                    ChatParticipantRealm::class,
-                    ImageMessageRealm::class,
-                    MessageRealm::class,
-                    PreferenceRealm::class,
-                    PrivacyUserRealm::class
-                )
-            ).schemaVersion(1).deleteRealmIfMigrationNeeded().build()
+        try {
+            val url = context.getText(R.string.baseUrl).toString()
+            if (realm == null) {
+                val config = RealmConfiguration.Builder(
+                    schema = setOf(
+                        UserRealm::class,
+                        BlockRealm::class,
+                        ChatRealm::class,
+                        LocationRealm::class,
+                        ImageProfileRealm::class,
+                        ChatParticipantRealm::class,
+                        ImageMessageRealm::class,
+                        MessageRealm::class,
+                        PreferenceRealm::class,
+                        PrivacyUserRealm::class
+                    )
+                ).schemaVersion(1).deleteRealmIfMigrationNeeded().build()
 
-            val realm1 by lazy {
-                Realm.open(config)
+                val realm1 by lazy {
+                    Realm.open(config)
+                }
+
+                this.realm = realm1
+            } else {
+                this.realm = realm
+            }
+            this.url = url
+            this.context = context
+            this.retrofit =
+                Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create())
+                    .build()
+            this.apiServiceChat = this.retrofit.create(ChatEndPoint::class.java)
+            this.chatRequests = ChatRequests(url, this.realm)
+
+            val storedToken = TokenManager(context).getToken()
+
+            if (storedToken != null) {
+                token = storedToken
             }
 
-            this.realm = realm1
-        } else {
-            this.realm = realm
+            val userUuid = getSubFromJwt(token)
+
+            if (userUuid != null) {
+                val user = realm?.query<UserRealm>("uuid == $0", userUuid)?.find()?.firstOrNull()
+                user?.toClass()?.let { _myUser.value = it }
+            }
+            connectSocket()
+        } catch (exception: Exception) {
+            exception.printStackTrace()
         }
-        this.url = url
-        this.context = context
-        this.retrofit =
-            Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create())
-                .build()
-        this.apiServiceChat = this.retrofit.create(ChatEndPoint::class.java)
-        this.chatRequests = ChatRequests(url, this.realm)
-        TokenManager(context).getToken()?.let { this.token = it }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun connectSocket() {
-        val url = url + "/?token=" + token.replace("Bearer ", "")
-        socketManager = SocketManager(url, context)
-        socketManager?.connect()
-
-        socketManager?.apply {
-            on(Socket.EVENT_CONNECT) {
-                _isSocketConnected.value = true
-                println("Connected to server")
-            }
-
-            on(Socket.EVENT_DISCONNECT) { args ->
-                _isSocketConnected.value = false
-                println("Disconnected from server")
-                if (args.isNotEmpty()) {
-                    println("Reason for disconnect: ${args[0]}")
-                    if (args[0] is Throwable) {
-                        (args[0] as Throwable).printStackTrace()
-                    }
+        try {
+            val url = url + "/?token=" + token.replace("Bearer ", "")
+            socketManager = SocketManager(url, context)
+            socketManager?.let { manager ->
+                com.example.meettalk.data.repository.connectSocket(manager, this@ChatViewModel) {
+                    _isSocketConnected.value = it
                 }
             }
-
-            on(Socket.EVENT_CONNECT_ERROR) { args ->
-                println("🔁 Reconnect error:")
-                args.forEach { println("  ➤ $it") }
-                if (args.isNotEmpty() && args[0] is Throwable) {
-                    (args[0] as Throwable).printStackTrace()
-                }
-            }
-
-            on("messageReady") { taskManager.addTask { messageReady(it) } }
-
-            on("contactProfileUpdated") { args -> taskManager.addTask { contactProfileUpdated(args) } }
-
-            on("contactImageProfileUpdated") { args ->
-                taskManager.addTask {
-                    contactImageProfileUpdated(
-                        args
-                    )
-                }
-            }
-
-            on("message") { args -> taskManager.addTask { onMessageReceived(args) } }
-
-            on("idsChats") {
-                taskManager.addTask { newChats(it) }
-            }
-
-            on("listMessageRemoved") { taskManager.addTask { listMessageRemoved(it) } }
-
-            on("updateMessage") { taskManager.addTask { updateMessage(it) } }
-
-            on("removeMessages") { taskManager.addTask { removeMessages(it) } }
+        } catch (exeption: Exception) {
+            exeption.printStackTrace()
         }
     }
 
-    private suspend fun newChats(args: Array<Any>) {
+    suspend fun newChats(args: Array<Any>) {
         if (args.isEmpty() || args[0] == null) {
             println("Argumentos de mensagem vazios ou nulos.")
             return
@@ -199,7 +181,8 @@ open class ChatViewModel() : ViewModel() {
             realm.write {
                 chatsPayload.chats.forEach { chatJson ->
                     // Busca o chat existente pelo UUID
-                    val existingChatRealm = query<ChatRealm>("uuid == $0", chatJson.uuid).first().find()
+                    val existingChatRealm =
+                        query<ChatRealm>("uuid == $0", chatJson.uuid).first().find()
 
                     if (existingChatRealm == null) {
                         // Chat não existe: converte e copia para o Realm
@@ -216,14 +199,17 @@ open class ChatViewModel() : ViewModel() {
                             // Sincroniza mensagens: Adiciona novas mensagens ou atualiza existentes
                             chatJson.messages.forEach { messageJson ->
                                 // Busca a mensagem existente no chat Realm
-                                val existingMessageRealm = messages.query<MessageRealm>("uuid == $0", messageJson.uuid).first().find()
+                                val existingMessageRealm =
+                                    messages.query<MessageRealm>("uuid == $0", messageJson.uuid)
+                                        .first().find()
 
                                 if (existingMessageRealm == null) {
                                     // Mensagem não existe: adiciona ao RealmList do chat
                                     messageJson.toRealm()?.let { newMessageRealm ->
                                         messages.add(newMessageRealm)
                                         println("Mensagem nova adicionada ao chat ${uuid}: ${newMessageRealm.uuid}")
-                                    } ?: println("Falha ao converter mensagem para Realm: ${messageJson.uuid}")
+                                    }
+                                        ?: println("Falha ao converter mensagem para Realm: ${messageJson.uuid}")
                                 } else {
                                     // Mensagem existe: atualiza seus campos se necessário.
                                     // Se suas mensagens tiverem campos mutáveis ou que precisam de atualização.
@@ -245,7 +231,7 @@ open class ChatViewModel() : ViewModel() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun contactImageProfileUpdated(args: Array<Any>) {
+    fun contactImageProfileUpdated(args: Array<Any>) {
         if (args.isEmpty()) {
             println("Argumentos de mensagem vazios.")
             return
@@ -324,7 +310,7 @@ open class ChatViewModel() : ViewModel() {
         }
     }
 
-    private fun contactProfileUpdated(args: Array<Any>) {
+    fun contactProfileUpdated(args: Array<Any>) {
         if (args.isEmpty()) {
             println("Argumentos de mensagem vazios.")
             return
@@ -349,7 +335,7 @@ open class ChatViewModel() : ViewModel() {
 
     }
 
-    private fun removeMessages(args: Array<Any>) {
+    fun removeMessages(args: Array<Any>) {
         if (args.isEmpty()) return
 
         val gson = Gson()
@@ -381,7 +367,7 @@ open class ChatViewModel() : ViewModel() {
         }
     }
 
-    private suspend fun updateMessage(args: Array<Any>) {
+    suspend fun updateMessage(args: Array<Any>) {
         if (args.isEmpty()) {
             println("Evento 'updateMessage' recebido com argumentos vazios.")
             return
@@ -414,7 +400,7 @@ open class ChatViewModel() : ViewModel() {
         }
     }
 
-    private suspend fun onMessageReceived(args: Array<Any>) {
+    suspend fun onMessageReceived(args: Array<Any>) {
         if (args.isEmpty()) {
             println("Argumentos de mensagem vazios.")
             return
@@ -459,27 +445,23 @@ open class ChatViewModel() : ViewModel() {
                     realm.write {
                         val liveChat = findLatest(chat)
                         val messageModelCopy =
-                            messageModel.copy() // Copie aqui para não alterar o original
+                            messageModel.copy()
 
                         var imageRealmToAttach: ImageMessageRealm? = null
                         messageModelCopy.ImageMessage?.let {
-                            // 1. Crie o RealmObject da imagem (se format.toMessageRealm não fizer isso)
-                            //    OU use o que vem de format.toMessageRealm se você quiser persistir separadamente.
                             val tempImageRealm =
-                                FormatRealm().toImageMessage(it)// Adapte se precisar passar o Model da imagem
+                                FormatRealm().toImageMessage(it)
 
-                            // 2. Persista a imagem primeiro
                             imageRealmToAttach = copyToRealm(tempImageRealm, UpdatePolicy.ALL)
                         }
 
-                        // 3. Agora, crie a MessageRealm e anexe a ImageMessageRealm JÁ GERENCIADA
                         val messageRealm = format.toMessageRealm(messageModelCopy)
 
                         if (messageRealm != null) {
 
-                            messageRealm.ImageMessage = imageRealmToAttach // <--- MUITO IMPORTANTE!
+                            messageRealm.ImageMessage = imageRealmToAttach
 
-                            liveChat?.messages?.add(messageRealm) // Adicione a mensagem (agora com a imagem gerenciada)
+                            liveChat?.messages?.add(messageRealm)
                             liveChat?.lastMessageDate = messageModel.createdAt
                         } else {
                             println("Erro ao formatar mensagem para Realm: $messageModelCopy")
@@ -499,7 +481,7 @@ open class ChatViewModel() : ViewModel() {
         }
     }
 
-    private suspend fun listMessageRemoved(args: Array<Any>) {
+    suspend fun listMessageRemoved(args: Array<Any>) {
         if (args.isNotEmpty()) {
             val jsonString = when (args[0]) {
                 is String -> args[0] as String
@@ -524,7 +506,7 @@ open class ChatViewModel() : ViewModel() {
         }
     }
 
-    private suspend fun messageReady(args: Array<Any>) {
+    suspend fun messageReady(args: Array<Any>) {
         if (args.isEmpty()) return
 
         val gson = Gson()
@@ -565,54 +547,34 @@ open class ChatViewModel() : ViewModel() {
         }
     }
 
-    private fun insertChatsData(listChats: List<Chat>) {
-        try {
-            realm.writeBlocking {
-                listChats.forEach { chat ->
-                    val chatRealm = format.toChat(chat)
-                    if (chatRealm != null) {
-                        val formattedParticipants = chatRealm.participants.map {
-                            it.id = "${it.userId}${it.chatId}"
-                            it
-                        }
+    suspend fun findChatsServer(): List<Chat> {
+        return chatRequests.manyRequest(token)
+    }
 
-                        chatRealm.participants = realmListOf(*formattedParticipants.toTypedArray())
-
-                        copyToRealm(chatRealm, updatePolicy = UpdatePolicy.ALL)
-                    } else {
-                        Log.w("REALM", "ChatRealm nulo para chat: ${chat.uuid}")
-                    }
-                }
+    private fun insertInBank(chat: Chat?) {
+        val format = FormatRealm()
+        realm.writeBlocking {
+            format.toChat(chat)?.let {
+                copyToRealm(it, UpdatePolicy.ALL)
             }
-        } catch (e: Exception) {
-            Log.e("REALM", "Falha ao inserir dados do chat", e)
         }
     }
 
-    /**
-     * Busca e processa uma lista paginada de objetos ChatRealm do Realm Database.
-     *
-     * Esta função consulta o Realm para obter uma coleção de chats, aplicando paginação
-     * para limitar e compensar os resultados com base nos parâmetros [page] e [size].
-     * Os chats recuperados são então formatados e os resultados únicos (baseados no UUID)
-     * são atribuídos a [_chatsResult].
-     *
-     * @param page O número da página a ser recuperada. Padrão para 1.
-     * A paginação começa do índice 0 internamente, então a página 1 corresponde
-     * aos primeiros [size] itens, a página 2 aos próximos [size] itens, e assim por diante.
-     * @param size O número máximo de chats a serem retornados por página. Padrão para 20.
-     */
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun findChatsData(page: Int = 1, size: Int = 20) {
-        val chats = realm.query<ChatRealm>().limit(size * page).find()
-        if (chats.isNotEmpty()) {
-            chats.map { chat ->
-                formatR.fromChatRealm(chat)
-            }.let { list ->
-                _chatsResult.value = list.distinctBy { it.uuid }
+    private suspend fun findChatsRealm(): List<Chat> {
+        val chats = realm.query<ChatRealm>().find()
+        return chats.mapNotNull {
+            it.toRealm()
+        }
+    }
+
+    suspend fun findChats() {
+        _chatsResult.value = findChatsRealm().let { chatsRealm ->
+            chatsRealm.ifEmpty {
+                findChatsServer().let { chats ->
+                    taskManager.addTask { chats.forEach { insertInBank(it) } }
+                    chats
+                }
             }
-        } else {
-            _chatsResult.value = emptyList()
         }
     }
 
@@ -622,25 +584,9 @@ open class ChatViewModel() : ViewModel() {
             realm.query<ChatRealm>().asFlow().collect { result ->
                 val chats = result.list
                 if (chats.isNotEmpty()) {
-                    findChatsData()
+                    findChatsRealm()
                 }
             }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun findMany(page: Int = 1, size: Int = 20) {
-        try {
-            findChatsData(page, size)
-            var chats = _chatsResult.value
-            if (chats.isEmpty()) {
-                chats = chatRequests.manyRequest(token)
-                insertChatsData(chats.distinctBy { it.uuid })
-            }
-        } catch (e: Exception) {
-            Log.e("Login", "Erro: ${e.message}")
-        } finally {
-            observeChats()
         }
     }
 }

@@ -8,7 +8,7 @@ data class Chat(
     val createdAt: String,
     val lastMessageDate: String?,
     val messages: List<Message> = emptyList(),
-    val participants: List<ChatParticipant>,
+    val participants: List<ChatParticipant> = emptyList(),
     val fav: Boolean = false
 ) {
     val format = FormatRealm()

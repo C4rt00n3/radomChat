@@ -58,7 +58,7 @@ fun UserProfileOverlay(user: User?) {
         Text(
             text = stringResource(
                 R.string.genero_format,
-                user?.gender?.name ?: stringResource(R.string.nao_informado)
+                user?.gender ?: stringResource(R.string.nao_informado)
             ),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.8f)

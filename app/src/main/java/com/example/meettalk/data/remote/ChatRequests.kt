@@ -33,6 +33,7 @@ class ChatRequests(private val url: String, private val realm: Realm) {
 
     suspend fun manyRequest(token: String): List<Chat> {
         val response: Response<List<Chat>> = apiServiceChat.findAll(token)
+
         if (response.isSuccessful) {
             return response.body() ?: listOf()
         }

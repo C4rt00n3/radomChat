@@ -134,6 +134,77 @@ class MessageViewModel(
     }
 
     /**
+     * Insere uma mensagem no banco de dados remoto e, em caso de falha,
+     * persiste localmente usando o Realm.
+     *
+     * Esta função tenta enviar a mensagem para o backend usando o token de autenticação.
+     * Se ocorrer erro, a mensagem será salva localmente via [addMessageInDb],
+     * e uma notificação de erro será exibida ao usuário.
+     *
+     * @param token Token de autenticação do usuário.
+     * @param message A mensagem a ser enviada e inserida no banco de dados.
+     * @param onFinished Callback a ser chamado ao final da operação (sucesso ou falha).
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private suspend fun insertInDatabase(
+        token: String,
+        message: Message,
+        currentUser: User?,
+        file: MultipartBody.Part? = null,
+        onFinished: (Chat?) -> Unit
+    ) {
+        chatRequests.create(token, convertMessage(message), file = file) { mess ->
+            try {
+                realm.writeBlocking {
+                    if (message.chatId == null) {
+                        val chat = Chat(
+                            uuid = mess.uuid,
+                            createdAt = Instant.now().toString(),
+                            lastMessageDate = mess.createdAt,
+                            messages = listOf(message),
+                            participants = listOf(
+                                ChatParticipant(
+                                    chatId = mess.chatId!!,
+                                    userId = mess.senderId,
+                                    user = _myUser.value
+                                ),
+                                ChatParticipant(
+                                    chatId = mess.chatId,
+                                    userId = mess.receiverId,
+                                    user = currentUser
+                                )
+                            ),
+                            fav = false
+                        )
+                        format.toChat(chat)?.let { chatRealm ->
+                            val formattedParticipants = chatRealm.participants.map {
+                                it.id = "${it.userId}${it.chatId}"
+                                it
+                            }
+
+                            chatRealm.participants =
+                                realmListOf(*formattedParticipants.toTypedArray())
+
+                            copyToRealm(chatRealm, updatePolicy = UpdatePolicy.ALL)
+                        }
+
+                        onFinished(chat)
+                    } else {
+                        addMessageInDb(
+                            transaction = this,
+                            message = mess
+                        )
+                        onFinished(null)
+                    }
+                }
+            } catch (e: Exception) {
+                showToast("Error ao enviar mensagem!")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
      * Adiciona uma nova mensagem à conversa e inicia o processo de inserção no banco de dados.
      *
      * Esta função adiciona a [message] localmente à lista de mensagens da conversa,
@@ -236,77 +307,6 @@ class MessageViewModel(
         if (chatRealm != null && messageRealm != null) {
             chatRealm.messages.add(messageRealm)
             transaction.copyToRealm(chatRealm, updatePolicy = UpdatePolicy.ALL)
-        }
-    }
-
-    /**
-     * Insere uma mensagem no banco de dados remoto e, em caso de falha,
-     * persiste localmente usando o Realm.
-     *
-     * Esta função tenta enviar a mensagem para o backend usando o token de autenticação.
-     * Se ocorrer erro, a mensagem será salva localmente via [addMessageInDb],
-     * e uma notificação de erro será exibida ao usuário.
-     *
-     * @param token Token de autenticação do usuário.
-     * @param message A mensagem a ser enviada e inserida no banco de dados.
-     * @param onFinished Callback a ser chamado ao final da operação (sucesso ou falha).
-     */
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private suspend fun insertInDatabase(
-        token: String,
-        message: Message,
-        currentUser: User?,
-        file: MultipartBody.Part? = null,
-        onFinished: (Chat?) -> Unit
-    ) {
-        chatRequests.create(token, convertMessage(message), file = file) { mess ->
-            try {
-                realm.writeBlocking {
-                    if (message.chatId == null) {
-                        val chat = Chat(
-                            uuid = mess.uuid,
-                            createdAt = Instant.now().toString(),
-                            lastMessageDate = mess.createdAt,
-                            messages = listOf(message),
-                            participants = listOf(
-                                ChatParticipant(
-                                    chatId = mess.chatId!!,
-                                    userId = mess.senderId,
-                                    user = _myUser.value
-                                ),
-                                ChatParticipant(
-                                    chatId = mess.chatId,
-                                    userId = mess.receiverId,
-                                    user = currentUser
-                                )
-                            ),
-                            fav = false
-                        )
-                        format.toChat(chat)?.let { chatRealm ->
-                            val formattedParticipants = chatRealm.participants.map {
-                                it.id = "${it.userId}${it.chatId}"
-                                it
-                            }
-
-                            chatRealm.participants =
-                                realmListOf(*formattedParticipants.toTypedArray())
-
-                            copyToRealm(chatRealm, updatePolicy = UpdatePolicy.ALL)
-                        }
-
-                        onFinished(chat)
-                    } else {
-                        addMessageInDb(
-                            transaction = this,
-                            message = mess
-                        )
-                        onFinished(null)
-                    }
-                }
-            } catch (e: Exception) {
-                showToast("Error ao enviar mensagem!")
-                e.printStackTrace()
-            }
         }
     }
 
@@ -416,9 +416,9 @@ class MessageViewModel(
     }
 
     private fun findChat(uuid: String): Chat? {
-       return  realm.query<ChatRealm>("uuid == $0", uuid).first().find()?.let {
-           formatR.fromChatRealm(it)
-       }
+        return  realm.query<ChatRealm>("uuid == $0", uuid).first().find()?.let {
+            formatR.fromChatRealm(it)
+        }
     }
 
     /**

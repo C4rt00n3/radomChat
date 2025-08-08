@@ -108,7 +108,6 @@ val message1 = Message(
 val user = User(
     uuid = "3beba2e2-3fc8-4acc-b7c0-51c78d6ffae3",
     name = "Sandro Cato",
-    gender = Gender.M,
     birthDate = "28",
     preference = Preference(
         uuid = UUID.randomUUID().toString(),

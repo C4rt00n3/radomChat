@@ -83,18 +83,15 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.meettalk.R
-import com.example.meettalk.data.local.model.OptionsMenu
 import com.example.meettalk.data.local.model.RealmClass.UserRealm
 import com.example.meettalk.data.local.model.body.enums.MessageType
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.ChatParticipant
 import com.example.meettalk.data.local.model.entities.ImageMessage
-import com.example.meettalk.data.local.model.entities.ImageProfile
 import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.presentation.components.chat.rememberDynamicOptions
 import com.example.meettalk.presentation.components.images.AsynchronousImageWithErrorPrevention
-import com.example.meettalk.presentation.components.images.AsynchronousImageWithErrorPreventionMessage
 import com.example.meettalk.presentation.components.message.MessageBubble
 import com.example.meettalk.presentation.viewmodel.MessageViewModel
 import com.example.meettalk.presentation.viewmodel.UserViewModel
@@ -188,7 +185,7 @@ fun ChatScreen(
         },
         onEditMessage = { messageToEdit ->
             replyMessage = messageToEdit
-            textFieldState = messageToEdit.text ?: ""
+            textFieldState = messageToEdit.text
             selectedMessages.clear()
             keyboardController?.show()
             focusRequester.requestFocus()
@@ -286,7 +283,7 @@ fun ChatScreen(
                             Log.d("UserUpdate", "Atualizando userRealm. userRealm.updateAt: ${userRealm.updateAt} | incoming.updateAt: ${it.updateAt}")
                             it.birthDate.let { userRealm.birthDate = it }
                             it.name.let { userRealm.name = it }
-                            it.gender?.name?.let { userRealm.gender = it }
+                            it.gender?.let { userRealm.gender = it }
                             it.preference?.let { userRealm.preference = it.toRealm() }
 
                             it.updateAt.let { userRealm.updateAt = it }
@@ -587,7 +584,8 @@ fun ChatScreen(
                                         if (chat != null) {
                                             chat =
                                                 chat?.copy(messages = chat!!.messages + message)
-                                        } else {
+                                        }
+                                        else {
                                             val newChatUuid = UUID.randomUUID().toString()
                                             chat = Chat(
                                                 newChatUuid,

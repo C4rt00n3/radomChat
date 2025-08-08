@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meettalk.R
+import com.example.meettalk.data.local.AppRoutes
 import com.example.meettalk.data.local.model.RealmClass.BlockRealm
 import com.example.meettalk.data.local.model.RealmClass.ChatParticipantRealm
 import com.example.meettalk.data.local.model.RealmClass.ChatRealm
@@ -36,6 +37,7 @@ import com.example.meettalk.utils.TaskManager
 import com.example.meettalk.utils.TokenManager
 import com.example.meettalk.utils.getAddressFromLocation
 import com.example.meettalk.utils.getSubFromJwt
+import com.example.meettalk.utils.isJwtExpired
 import com.example.meettalk.utils.showToast
 import com.example.meettalk.utils.users.updateUserInRealm
 import io.realm.kotlin.Realm
@@ -98,6 +100,30 @@ class UserViewModel : ViewModel() {
             println(error.message)
             null
         }
+    }
+
+    // Dentro do UserViewModel
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun handleTokenValidation(context: Context): String {
+        val tokenManager = TokenManager(context)
+        val localToken = tokenManager.getToken()
+
+        if (!localToken.isNullOrBlank() && !isJwtExpired(localToken.replace("Bearer ", ""))) {
+            // Token local é válido, vai para a lista de chats
+            return AppRoutes.CHAT_LIST
+        }
+
+        try {
+            val newToken = chatRequests.refreshAndGetToken()
+            if (!newToken.isNullOrBlank()) {
+                tokenManager.saveToken(newToken)
+                return AppRoutes.CHAT_LIST
+            }
+        } catch (e: Exception) {
+            Log.e("AuthError", "Falha ao buscar novo token", e)
+        }
+
+        return AppRoutes.LOGIN
     }
 
     /**

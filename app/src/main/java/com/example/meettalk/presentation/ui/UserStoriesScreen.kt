@@ -135,7 +135,6 @@ fun UserStoriesScreenPreview() {
             uuid = "123e4567-e89b-12d3-a456-426614174000",
             name = "Maria Clara",
             birthDate = "1995-07-01T02:00:00.000Z", // Data de nascimento para calcular a idade
-            gender = Gender.F,
             chatParticipants = listOf(),
             preference = Preference(
                 uuid = UUID.randomUUID().toString(),

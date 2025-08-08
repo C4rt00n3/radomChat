@@ -21,6 +21,7 @@ import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.Preference
 import com.example.meettalk.data.local.model.entities.PrivacyUser
 import com.example.meettalk.data.local.model.entities.User
+import java.util.UUID
 
 class FormatClass {
 
@@ -51,19 +52,25 @@ class FormatClass {
         )
     }
 
-    fun fromUserRealm(userRealm: UserRealm): User? {
-        return User(
-            uuid = userRealm.uuid,
-            name = userRealm.name,
-            gender = enumValueOfOrNull<Gender>(userRealm.gender) ?: Gender.M,
-            preference = userRealm.preference.let { fromPreference(it!!) },
-            location = userRealm.location?.let { fromLocationRealm(it) },
-            birthDate = userRealm.birthDate,
-            profileImages = userRealm.profileImages.map { it.toClass() },
-            updateAt = userRealm.updateAt,
-            createAt = userRealm.createAt,
-            privacyUser = userRealm.privacyUser?.let { fromPrivacyUserRealm(it) }
-        )
+    fun fromUserRealm(userRealm: UserRealm?): User? {
+        return userRealm?.let {
+            User(
+                uuid = userRealm.uuid,
+                name = userRealm.name,
+                gender = userRealm.gender ?: Gender.M.name,
+                preference = userRealm.preference?.toPreference() ?: Preference(
+                    uuid = UUID.randomUUID().toString(),
+                    gender = Gender.O,
+                    maxAge = 100
+                ),
+                location = userRealm.location?.let { fromLocationRealm(it) },
+                birthDate = userRealm.birthDate,
+                profileImages = userRealm.profileImages.map { it.toClass() },
+                updateAt = userRealm.updateAt,
+                createAt = userRealm.createAt,
+                privacyUser = userRealm.privacyUser?.let { fromPrivacyUserRealm(it) }
+            )
+        }
     }
 
     fun fromPrivacyUserRealm(privacyUserRealm: PrivacyUserRealm): PrivacyUser {
@@ -101,27 +108,31 @@ class FormatClass {
         }
     }
 
-    fun fromChatRealm(chatRealm: ChatRealm): Chat {
-        return Chat(
-            uuid = chatRealm.uuid,
-            createdAt = chatRealm.createdAt,
-            lastMessageDate = chatRealm.lastMessageDate,
-            fav = chatRealm.fav,
-            messages = chatRealm.messages
-                .mapNotNull { fromMessageRealm(it) }
-                .distinctBy { it.uuid },
-            participants = chatRealm.participants
-                .map { fromChatParticipantRealm(it) }
-                .distinctBy { it.userId }
-        )
+    fun fromChatRealm(chatRealm: ChatRealm?): Chat? {
+        return chatRealm?.let{
+            Chat(
+                uuid = chatRealm.uuid,
+                createdAt = chatRealm.createdAt,
+                lastMessageDate = chatRealm.lastMessageDate,
+                fav = chatRealm.fav,
+                messages = chatRealm.messages
+                    .mapNotNull { fromMessageRealm(it) }
+                    .distinctBy { it.uuid },
+                participants = chatRealm.participants
+                    .map {
+                        fromChatParticipantRealm(it)
+                    }
+                    .distinctBy { it.userId }
+            )
+        }
     }
 
     fun fromChatParticipantRealm(participantRealm: ChatParticipantRealm): ChatParticipant {
         return ChatParticipant(
             chatId = participantRealm.chatId,
             userId = participantRealm.userId,
-            chat = if (participantRealm.chat != null) fromChatRealm(participantRealm.chat!!) else null,
-            user = if (participantRealm.user != null) fromUserRealm(participantRealm.user!!) else null
+            chat = fromChatRealm(participantRealm.chat) ,
+            user = fromUserRealm(participantRealm.user)
         )
     }
 

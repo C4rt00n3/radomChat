@@ -60,7 +60,7 @@ fun UserProfileDetailsSection(
 
         DetailRow(
             icon = {
-                val genderIconResId = if (currentUser?.gender == Gender.F) R.drawable.baseline_face_3_24 else R.drawable.baseline_face_6_24
+                val genderIconResId = if (currentUser?.gender == Gender.F.name) R.drawable.baseline_face_3_24 else R.drawable.baseline_face_6_24
                 Icon(
                     painter = painterResource(genderIconResId),
                     contentDescription = stringResource(R.string.sexo_do_usuario),
@@ -68,8 +68,8 @@ fun UserProfileDetailsSection(
                 )
             },
             value = when (currentUser?.gender) {
-                Gender.M -> stringResource(R.string.masculino)
-                Gender.F -> stringResource(R.string.feminino)
+                Gender.M.name -> stringResource(R.string.masculino)
+                Gender.F.name -> stringResource(R.string.feminino)
                 else -> stringResource(R.string.nao_informado)
             }
         )

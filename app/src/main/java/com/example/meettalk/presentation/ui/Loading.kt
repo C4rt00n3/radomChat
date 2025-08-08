@@ -36,25 +36,11 @@ fun Loading(
 
     LaunchedEffect(Unit) {
         userViewModel.build(context, realm)
-        val token = TokenManager(context).getToken() ?: ""
-        val replaceToken = token.replace("Bearer ", "")
-
-        if (replaceToken.isBlank()) {
-            navController.navigate(AppRoutes.LOGIN)
-            return@LaunchedEffect
+        val route = userViewModel.handleTokenValidation(context)
+        navController.navigate(route) {
+            // Garante que a tela de loading seja removida do backstack
+            popUpTo(AppRoutes.LOADING) { inclusive = true }
         }
-
-        if (isJwtExpired(replaceToken)) {
-            navController.navigate(AppRoutes.LOGIN)
-            return@LaunchedEffect
-        }
-
-        if (!userViewModel.verifyToken(token)) {
-
-            navController.navigate(AppRoutes.LOGIN)
-            return@LaunchedEffect
-        }
-        navController.navigate(AppRoutes.CHAT_LIST)
     }
 
     Column(

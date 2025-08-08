@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">MeetTalk</string>
-    <string name="baseUrl">https://d24f9fee13b2.ngrok-free.app</string>
+    <string name="baseUrl">https://d16ccadf5520.ngrok-free.app</string>
     <string name="vis_o_geral">Visão geral</string>
     <string name="desbloquear">Desbloquear</string>
     <string name="bloquear">Bloquear</string>

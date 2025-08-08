@@ -70,7 +70,7 @@ class FormatRealm {
         return UserRealm().apply {
             uuid = user.uuid
             name = user.name
-            gender = user.gender?.name ?: Gender.M.name
+            gender = user.gender ?: Gender.M.name
             birthDate = user.birthDate
             location = user.location?.let { toLocation(it) }
             profileImages = realmListOf(
@@ -97,7 +97,6 @@ class FormatRealm {
 
     fun toChat(chat: Chat?): ChatRealm? {
         if (chat == null) return null
-
         return try {
             ChatRealm().apply {
                 uuid = chat.uuid

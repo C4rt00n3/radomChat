@@ -32,7 +32,7 @@ fun updateUserInRealm(realm: Realm, uuid: String, userData: User): User? {
 
             userRealm?.apply {
                 userData.name?.let { name = it }
-                userData.gender?.name?.let { gender = it }
+                userData.gender?.let { gender = it }
                 userData.birthDate?.let { birthDate = it }
                 userData.updateAt?.let { updateAt = it }
 
