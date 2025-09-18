@@ -36,9 +36,8 @@ fun Loading(
 
     LaunchedEffect(Unit) {
         userViewModel.build(context, realm)
-        val route = userViewModel.handleTokenValidation(context)
+        val route = userViewModel.handleTokenValidation()
         navController.navigate(route) {
-            // Garante que a tela de loading seja removida do backstack
             popUpTo(AppRoutes.LOADING) { inclusive = true }
         }
     }

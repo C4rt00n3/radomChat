@@ -6,12 +6,18 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -24,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.meettalk.R
+import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.presentation.components.FullScreenLoader
 import com.example.meettalk.presentation.components.NavigationBarApp
 import com.example.meettalk.presentation.components.NewChatFloatingActionButton
@@ -98,6 +106,7 @@ fun ChatListScreen(
     val currentUser by userViewModel.myUser.collectAsState(null)
     val authToken by userViewModel.token.collectAsState("")
     val allChats by chatViewModel.chatsResult.collectAsState(emptyList())
+    val selectedChats by chatViewModel.selectedChats.collectAsState(emptyList())
 
     var selectedFilterCategoryIndex by remember { mutableIntStateOf(ChatFilterCategory.ALL.index) }
     var isInitialLoaderVisible by remember { mutableStateOf(false) }
@@ -137,6 +146,7 @@ fun ChatListScreen(
         }
 
     var isLoadingMoreChats by remember { mutableStateOf(false) }
+    var checkbox by remember { mutableStateOf(false) }
     val lazyListState = rememberLazyListState()
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
@@ -163,6 +173,7 @@ fun ChatListScreen(
         chatViewModel.apply {
             build(context, realm)
             findChats()
+            observeChats()
         }
     }
 
@@ -195,6 +206,8 @@ fun ChatListScreen(
                 searchQuery = searchQuery,
                 onSearchQueryChange = { searchQuery = it },
                 isSearchActive = isSearchActive,
+                chatViewModel = chatViewModel,
+                realm = realm,
                 onSearchActiveChange = { newActiveState ->
                     isSearchActive = newActiveState
                     if (!newActiveState) searchQuery = ""
@@ -223,24 +236,51 @@ fun ChatListScreen(
         },
         bottomBar = { NavigationBarApp(navController) }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            ChatFilterSegmentedButtons(
-                onCategorySelected = { index, _ -> selectedFilterCategoryIndex = index }
-            )
-            if (displayedChats.isNotEmpty())
-                ChatListContent(
-                    displayedChats = displayedChats,
-                    currentUserUuid = currentUser?.uuid,
-                    authToken = authToken,
-                    lazyListState = lazyListState,
-                    isLoadingMore = isLoadingMoreChats,
-                    navController = navController
+            Column(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            ) {
+                if (selectedChats.isEmpty())
+                ChatFilterSegmentedButtons(
+                    onCategorySelected = { index, _ -> selectedFilterCategoryIndex = index }
                 )
-        }
+                else
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Selecionados")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(selectedChats.size.toString())
+                            Checkbox(
+                                checkbox,
+                                onCheckedChange = {
+                                    checkbox = it
+                                    if(it) {
+                                        chatViewModel.allSelectedChats(selectedChats)
+                                    } else {
+                                        chatViewModel.allSelectedChats(emptyList())
+                                    }
+                                },
+                            )
+                        }
+                    }
+                if (displayedChats.isNotEmpty())
+                    ChatListContent(
+                        displayedChats = displayedChats,
+                        currentUserUuid = currentUser?.uuid,
+                        authToken = authToken,
+                        lazyListState = lazyListState,
+                        isLoadingMore = isLoadingMoreChats,
+                        navController = navController,
+                        chatViewModel = chatViewModel
+                    )
+            }
+
     }
 
     if (isInitialLoaderVisible) {

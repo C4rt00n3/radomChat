@@ -336,7 +336,7 @@ fun MessageBubble(
                             Icon(
                                 painter = painterResource(R.drawable.checkmarkdoneoutline),
                                 modifier = Modifier.size(16.dp),
-                                contentDescription = if (message.isRead == true) "Visualizada" else "Não visualizada",
+                                contentDescription = if (message.isRead) "Visualizada" else "Não visualizada",
                                 tint = Color.Transparent
                             )
                         }

@@ -252,10 +252,6 @@ fun ChatScreen(
             if (currentUser == null) {
                 currentUser = getUser(userUuid)
             }
-
-            if (currentUser == null) {
-                currentUser = getUserRequest(userUuid)
-            }
         }
 
         if (currentUser == null) {

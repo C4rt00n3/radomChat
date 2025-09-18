@@ -1,5 +1,7 @@
 package com.example.meettalk.presentation.components.chat
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,8 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +29,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,12 +43,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.meettalk.R
 import com.example.meettalk.data.local.model.entities.User
 import com.example.meettalk.presentation.components.images.AsynchronousImageWithErrorPrevention
+import com.example.meettalk.presentation.components.rememberDynamicOptionsListChats
 import com.example.meettalk.presentation.ui.AppRoutes
+import com.example.meettalk.presentation.ui.ChatListScreen
+import com.example.meettalk.presentation.viewmodel.ChatViewModel
+import com.example.meettalk.ui.theme.MeetTalkTheme
+import io.realm.kotlin.Realm
 
 /**
  * Barra superior da tela de lista de chats.
@@ -61,10 +79,16 @@ fun ChatListTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     isSearchActive: Boolean,
-    onSearchActiveChange: (Boolean) -> Unit
+    chatViewModel: ChatViewModel = viewModel(),
+    realm: Realm?,
+    onSearchActiveChange: (Boolean) -> Unit,
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedChats by chatViewModel.selectedChats.collectAsState(emptyList())
+    val dynamicOptions = realm?.let { rememberDynamicOptionsListChats(selectedChats, it) }
+
     Column(
-        modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer),
+        modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer).padding(horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -140,9 +164,45 @@ fun ChatListTopBar(
                     )
                 }
             },
-            actions = {}, // Ações da barra superior (vazio no design atual)
+            actions = {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(onClick = {
+                        expanded = !expanded
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = stringResource(
+                                R.string.menu
+                            )
+                        )
+                    }
+                    DropdownMenu(expanded = expanded,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        onDismissRequest = { expanded = !expanded }) {
+                        dynamicOptions?.forEach {
+                            DropdownMenuItem(text = { Text(it.text) }, onClick = {
+                                expanded = false
+                                it.onClick()
+                            })
+                        }
+                    }
+                }
+            }, // Ações da barra superior (vazio no design atual)
             scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState()),
         )
         Spacer(Modifier.padding(top = 16.dp))
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true, name = "Preview ChatListScreen - Light Theme")
+@Composable
+fun ChatListTopBarPreview() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        MeetTalkTheme(darkTheme = false) {
+            ChatListTopBar(null, "", rememberNavController(), "", {}, false, realm = null) {}
+        }
     }
 }

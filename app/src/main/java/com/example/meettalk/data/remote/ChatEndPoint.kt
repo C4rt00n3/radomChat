@@ -5,6 +5,7 @@ import com.example.meettalk.data.local.model.body.CreateMessage
 import com.example.meettalk.data.local.model.body.DeleteMessageBody
 import com.example.meettalk.data.local.model.body.UpdateMessage
 import com.example.meettalk.data.local.model.body.enums.MessageType
+import com.example.meettalk.data.local.model.entities.AuthResponse
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.User
@@ -43,6 +44,9 @@ interface ChatEndPoint {
         @Body body: DeleteMessageBody, // Note a vírgula adicionada aqui
         @Query("safe") safe: Boolean = false // Ajuste aqui para definir o nome e o tipo do parâmetro de query
     ): Response<Unit>
+
+    @POST
+    suspend fun refreshAndGetToken(@Body refreshToken: String): Response<AuthResponse>
 
     @Multipart
     @POST("message")

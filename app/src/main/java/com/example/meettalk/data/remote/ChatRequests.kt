@@ -7,6 +7,7 @@ import com.example.meettalk.data.local.model.body.BodyUpdatesUsers
 import com.example.meettalk.data.local.model.body.CreateMessage
 import com.example.meettalk.data.local.model.body.DeleteMessageBody
 import com.example.meettalk.data.local.model.body.UpdateMessage
+import com.example.meettalk.data.local.model.entities.AuthResponse
 import com.example.meettalk.data.local.model.entities.Chat
 import com.example.meettalk.data.local.model.entities.Message
 import com.example.meettalk.data.local.model.entities.User
@@ -30,6 +31,10 @@ class ChatRequests(private val url: String, private val realm: Realm) {
         Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create()).build()
 
     private val apiServiceChat = retrofit.create(ChatEndPoint::class.java)
+
+    suspend fun refreshAndGetToken(refreshToken: String): AuthResponse? {
+        return  apiServiceChat.refreshAndGetToken(refreshToken).body()
+    }
 
     suspend fun manyRequest(token: String): List<Chat> {
         val response: Response<List<Chat>> = apiServiceChat.findAll(token)

@@ -58,9 +58,8 @@ fun ChatItem(
     lastMessage: Message?,
     unreadMessageCount: Int,
     authToken: String,
-    context: android.content.Context,
-    onChatClick: () -> Unit,
-    onProfileImageClick: () -> Unit
+    onProfileImageClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     ListItem(
         headlineContent = {
@@ -116,8 +115,7 @@ fun ChatItem(
         supportingContent = {
             Text(lastMessage?.text ?: "")
         },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onChatClick)
     )
 }

@@ -120,12 +120,11 @@ fun UserStoriesScreen(
             val userProfileImages = displayedUser?.profileImages ?: emptyList()
 
             FullScreenImageCarousel(images = userProfileImages, authToken = userAuthToken)
-
-            UserProfileOverlay(user = displayedUser)
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
 fun UserStoriesScreenPreview() {
